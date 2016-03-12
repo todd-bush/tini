@@ -1,0 +1,12 @@
+[package]
+name = "tiny-ini"
+version = "0.1.0"
+authors = ["Alexey Golubev <dr.freecx@gmail.com>"]
+
+[lib]
+name = "tiny_ini"
+
+[[example]]
+name = "test"
+
+[dependencies]
