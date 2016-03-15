@@ -22,6 +22,7 @@ impl<'a> Ini {
         let mut section_name = String::new();
         let mut entry_list = HashMap::new();
         for line in reader.lines().filter_map(|l| l.ok()) {
+            println!("line = `{}`", line);
             if line.contains('[') && line.contains(']') {
                 let left_pos = line.find('[').unwrap() + 1;
                 let right_pos = line.find(']').unwrap();
@@ -32,6 +33,7 @@ impl<'a> Ini {
                 section_name = (&line[left_pos..right_pos]).to_owned();
             } else if !line.starts_with(';') {
                 let vec: Vec<&str> = line.split('=').collect();
+                if vec.len() < 2 { continue; }
                 let token = vec[0].trim_right();
                 let value = if vec[1].contains(';') {
                     vec[1].split(';').nth(0).unwrap().trim()
