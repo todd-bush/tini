@@ -4,14 +4,14 @@ use std::io::{BufReader, Read};
 use std::fs::File;
 use std::str::FromStr;
 
-
-type IniParsed = HashMap<String, HashMap<String, String>>;
+type Section = HashMap<String, String>;
+type IniParsed = HashMap<String, Section>;
 
 #[derive(Debug)]
 pub struct Ini(IniParsed);
 
 impl Ini {
-    fn new() -> Ini {
+    pub fn new() -> Ini {
         Ini(HashMap::new())
     }
     fn from_string(string: &str) -> Ini {
@@ -87,6 +87,30 @@ impl Ini {
             }
             None => default.to_vec(),
         }
+    }
+}
+
+pub struct IniBuilder(IniParsed, Section, String);
+
+impl IniBuilder {
+    pub fn new() -> IniBuilder {
+        IniBuilder(HashMap::new(), HashMap::new(), String::new())
+    }
+    pub fn section<S: Into<String>>(&mut self, name: S) -> &mut Self {
+        if self.2.len() != 0 {
+            self.0.insert(self.2.clone(), self.1.clone());
+            self.1.clear()
+        }
+        self.2 = name.into();
+        self
+    }
+    pub fn item<S: Into<String>>(&mut self, name: S, value: S) -> &mut Self {
+        self.1.insert(name.into(), value.into());
+        self
+    }
+    pub fn build(&mut self) -> Ini {
+        let result = self.section("").0.clone();
+        Ini(result)
     }
 }
 
