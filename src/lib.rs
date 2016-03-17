@@ -13,7 +13,7 @@ type IniParsed = HashMap<String, HashMap<String, String>>;
 #[derive(Debug)]
 pub struct Ini(IniParsed);
 
-impl<'a> Ini {
+impl Ini {
     fn new() -> Ini {
         Ini(HashMap::new())
     }
@@ -46,8 +46,7 @@ impl<'a> Ini {
     }
 
     pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Ini {
-        let file = File::open(path)
-                       .expect(&format!("Can't open `{}`!", path.as_ref().display()));
+        let file = File::open(path).expect(&format!("Can't open `{}`!", path.as_ref().display()));
         let mut reader = BufReader::new(file);
         let mut buffer = String::new();
         let _ = reader.read_to_string(&mut buffer)
@@ -57,28 +56,28 @@ impl<'a> Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
-    fn get_raw(&'a self, section: &str, key: &str) -> Option<&String> {
+    fn get_raw(&self, section: &str, key: &str) -> Option<&String> {
         let s = self.0.get(section);
         match s {
             Some(hm) => hm.get(key),
             None => None,
         }
     }
-    pub fn get<T: FromStr>(&'a self, section: &str, key: &str) -> Option<T> {
+    pub fn get<T: FromStr>(&self, section: &str, key: &str) -> Option<T> {
         let data = self.get_raw(section, key);
         match data {
             Some(x) => x.parse().ok(),
-            None => None
+            None => None,
         }
     }
-    pub fn get_def<T: FromStr>(&'a self, section: &str, key: &str, default: T) -> T {
+    pub fn get_def<T: FromStr>(&self, section: &str, key: &str, default: T) -> T {
         let s = self.get_raw(section, key);
         match s {
             Some(x) => x.parse().unwrap_or(default),
             None => default,
         }
     }
-    pub fn get_vec<T>(&'a self, section: &str, key: &str, default: &[T]) -> Vec<T> 
+    pub fn get_vec<T>(&self, section: &str, key: &str, default: &[T]) -> Vec<T>
         where T: FromStr + Copy + Clone
     {
         let s = self.get_raw(section, key);
