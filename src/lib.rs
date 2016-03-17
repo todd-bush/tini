@@ -17,11 +17,11 @@ impl<'a> Ini {
     fn new() -> Ini {
         Ini(HashMap::new())
     }
-    fn from_string(string: &str) -> Ini {
+    fn from_string<S: Into<String>>(string: S) -> Ini {
         let mut result = Ini::new();
         let mut section_name = String::new();
         let mut entry_list = HashMap::new();
-        for (i, line) in string.lines().enumerate() {
+        for (i, line) in string.into().lines().enumerate() {
             match parse_line(&line) {
                 Parsed::Section(name) => {
                     if section_name.len() != 0 {
@@ -47,38 +47,44 @@ impl<'a> Ini {
 
     pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Ini {
         let file = File::open(path)
-                       .ok()
                        .expect(&format!("Can't open `{}`!", path.as_ref().display()));
         let mut reader = BufReader::new(file);
         let mut buffer = String::new();
         let _ = reader.read_to_string(&mut buffer)
-                      .ok()
                       .expect(&format!("Can't read `{}`!", path.as_ref().display()));
-        Ini::from_string(&buffer)
+        Ini::from_string(buffer)
     }
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
-        Ini::from_string(&buf.into())
+        Ini::from_string(buf.into())
     }
-    fn get_raw(&'a self, section: &str, key: &str) -> Option<&String> {
-        let s = self.0.get(section);
-        let result = match s {
-            Some(hm) => hm.get(key),
+    fn get_raw<S>(&'a self, section: S, key: S) -> Option<&String> 
+        where S: Into<String>
+    {
+        let s = self.0.get(&section.into());
+        match s {
+            Some(hm) => hm.get(&key.into()),
             None => None,
-        };
-        result
+        }
     }
-    pub fn get<T: FromStr>(&'a self, section: &str, key: &str, default: T) -> T {
+    pub fn get<T, S>(&'a self, section: S, key: S) -> Option<T> 
+        where T: FromStr, S: Into<String>
+    {
+        let data = self.get_raw(section.into(), key.into());
+        match data {
+            Some(x) => x.parse().ok(),
+            None => None
+        }
+    }
+    pub fn get_def<T: FromStr>(&'a self, section: &str, key: &str, default: T) -> T {
         let s = self.get_raw(section, key);
         match s {
             Some(x) => x.parse().unwrap_or(default),
-            _ => default,
+            None => default,
         }
     }
-    pub fn get_vec<T: FromStr + Copy + Clone>(&'a self,
-                                              section: &str,
-                                              key: &str,
-                                              default: &[T])
-                                              -> Vec<T> {
+    pub fn get_vec<T>(&'a self, section: &str, key: &str, default: &[T]) -> Vec<T> 
+        where T: FromStr + Copy + Clone
+    {
         let s = self.get_raw(section, key);
         match s {
             Some(x) => {
@@ -87,7 +93,7 @@ impl<'a> Ini {
                  .map(|(s, &d)| s.trim().parse().unwrap_or(d))
                  .collect()
             }
-            _ => default.to_vec(),
+            None => default.to_vec(),
         }
     }
 }
@@ -97,9 +103,17 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_float() {
+    fn test_int() {
+        let input: String = "[string]\nabc = 10".to_owned();
+        let ini = Ini::from_string(input);
+        let abc: Option<u32> = ini.get("string", "abc");
+        assert_eq!(abc, Some(10));
+    }
+
+    #[test]
+    fn test_float_def() {
         let ini = Ini::from_string("[section]\nname=10.5");
-        let name: f64 = ini.get("section", "name", 0.0);
+        let name: f64 = ini.get_def("section", "name", 0.0);
         assert_eq!(name, 10.5);
     }
 
