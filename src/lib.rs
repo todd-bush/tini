@@ -59,32 +59,36 @@ impl<'a> Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
-    fn get_raw(&'a self, section: &str, key: &str, default: &str) -> String {
+    fn get_raw(&'a self, section: &str, key: &str) -> Option<&String> {
         let s = self.0.get(section);
         let result = match s {
-            Some(hm) => {
-                let k = hm.get(key);
-                let value = match k {
-                    Some(v) => v.to_owned(),
-                    None => default.to_owned(),
-                };
-                value
-            }
-            None => default.to_owned(),
+            Some(hm) => hm.get(key),
+            None => None,
         };
         result
     }
-    pub fn get<T: FromStr>(&'a self, section: &str, key: &str, default: &str) -> T {
-        self.get_raw(section, key, default)
-            .parse()
-            .ok()
-            .expect(&format!("cannot convert to given type"))
+    pub fn get<T: FromStr>(&'a self, section: &str, key: &str, default: T) -> T {
+        let s = self.get_raw(section, key);
+        match s {
+            Some(x) => x.parse().unwrap_or(default),
+            _ => default,
+        }
     }
-    pub fn get_vec<T: FromStr>(&'a self, section: &str, key: &str, default: &str) -> Vec<T> {
-        self.get_raw(section, key, default)
-            .split(',')
-            .map(|s| s.trim().parse().ok().expect(&format!("cannot convert {} to given type", s)))
-            .collect()
+    pub fn get_vec<T: FromStr + Copy + Clone>(&'a self,
+                                              section: &str,
+                                              key: &str,
+                                              default: &[T])
+                                              -> Vec<T> {
+        let s = self.get_raw(section, key);
+        match s {
+            Some(x) => {
+                x.split(',')
+                 .zip(default)
+                 .map(|(s, &d)| s.trim().parse().unwrap_or(d))
+                 .collect()
+            }
+            _ => default.to_vec(),
+        }
     }
 }
 
@@ -95,14 +99,14 @@ mod test {
     #[test]
     fn test_float() {
         let ini = Ini::from_string("[section]\nname=10.5");
-        let name: f64 = ini.get("section", "name", "0");
+        let name: f64 = ini.get("section", "name", 0.0);
         assert_eq!(name, 10.5);
     }
 
     #[test]
     fn test_float_vec() {
         let ini = Ini::from_string("[section]\nname=1.2, 3.4, 5.6");
-        let name: Vec<f64> = ini.get_vec("section", "name", "0");
+        let name: Vec<f64> = ini.get_vec("section", "name", &[0.0, 0.0, 0.0]);
         assert_eq!(name, [1.2, 3.4, 5.6]);
     }
 }
