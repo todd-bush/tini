@@ -17,11 +17,11 @@ impl<'a> Ini {
     fn new() -> Ini {
         Ini(HashMap::new())
     }
-    fn from_string<S: Into<String>>(string: S) -> Ini {
+    fn from_string(string: &str) -> Ini {
         let mut result = Ini::new();
         let mut section_name = String::new();
         let mut entry_list = HashMap::new();
-        for (i, line) in string.into().lines().enumerate() {
+        for (i, line) in string.lines().enumerate() {
             match parse_line(&line) {
                 Parsed::Section(name) => {
                     if section_name.len() != 0 {
@@ -52,24 +52,20 @@ impl<'a> Ini {
         let mut buffer = String::new();
         let _ = reader.read_to_string(&mut buffer)
                       .expect(&format!("Can't read `{}`!", path.as_ref().display()));
-        Ini::from_string(buffer)
+        Ini::from_string(&buffer)
     }
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
-        Ini::from_string(buf.into())
+        Ini::from_string(&buf.into())
     }
-    fn get_raw<S>(&'a self, section: S, key: S) -> Option<&String> 
-        where S: Into<String>
-    {
-        let s = self.0.get(&section.into());
+    fn get_raw(&'a self, section: &str, key: &str) -> Option<&String> {
+        let s = self.0.get(section);
         match s {
-            Some(hm) => hm.get(&key.into()),
+            Some(hm) => hm.get(key),
             None => None,
         }
     }
-    pub fn get<T, S>(&'a self, section: S, key: S) -> Option<T> 
-        where T: FromStr, S: Into<String>
-    {
-        let data = self.get_raw(section.into(), key.into());
+    pub fn get<T: FromStr>(&'a self, section: &str, key: &str) -> Option<T> {
+        let data = self.get_raw(section, key);
         match data {
             Some(x) => x.parse().ok(),
             None => None
@@ -105,7 +101,7 @@ mod test {
     #[test]
     fn test_int() {
         let input: String = "[string]\nabc = 10".to_owned();
-        let ini = Ini::from_string(input);
+        let ini = Ini::from_buffer(input);
         let abc: Option<u32> = ini.get("string", "abc");
         assert_eq!(abc, Some(10));
     }
