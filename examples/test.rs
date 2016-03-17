@@ -4,7 +4,6 @@ use tiny_ini::Ini;
 fn main() {
     let config = Ini::from_file("./example.ini");
     println!("conif = {:?}", config);
-    let s1 = config.section("section_one").unwrap();
-    let n1: u32 = s1.get("name1").unwrap().parse().unwrap(); 
+    let n1: u32 = config.get("section_one", "name1", "0");
     println!("[section_one][name1] = {}", n1);
 }
