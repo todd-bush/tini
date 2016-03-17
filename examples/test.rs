@@ -15,4 +15,5 @@ fn main() {
                                 .item("d", "4")
                                 .build();
     println!("test = {:?}", test);
+    test.to_file("./test.ini");
 }
