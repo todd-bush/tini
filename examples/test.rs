@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate tiny_ini;
 use tiny_ini::{Ini, IniBuilder};
 
@@ -8,9 +9,9 @@ static SPLIT: &'static str = "=-------------------------------------------------
 fn main() {
     let config = Ini::from_file(INPUT).unwrap();
     println!(">> readed `{}` config file\n{}\n{}\n{}", INPUT, SPLIT, config, SPLIT);
-    let n1: u32 = config.get_def("section_one", "name1", 0);
+    let n1: u32 = get_or!(config, "section_one", "name1", 0);
     println!(">> entry `name1` from `section_one` = {}", n1);
-    let n2: Vec<bool> = config.get_vec("section_three", "frst4", &[false, false, false]);
+    let n2: Vec<bool> = get_vec_or!(config, "section_three", "frst4", vec![false]);
     println!(">> entry `frst4` from `section_three` = {:?}", n2);
     let test = IniBuilder::new().section("section_one")
                                 .item("a", "1")

@@ -12,6 +12,20 @@ type IniParsed = HashMap<String, Section>;
 #[derive(Debug)]
 pub struct Ini(IniParsed);
 
+#[macro_export]
+macro_rules! get_or {
+    ($o:ident, $s:expr, $k:expr, $d:expr) => {
+        $o.get($s, $k).unwrap_or($d)
+    }
+}
+
+#[macro_export]
+macro_rules! get_vec_or {
+    ($o:ident, $s:expr, $k:expr, $d:expr) => {
+        $o.get_vec($s, $k).unwrap_or($d)
+    }
+}
+
 impl Ini {
     pub fn new() -> Ini {
         Ini(HashMap::new())
@@ -81,25 +95,26 @@ impl Ini {
             None => None,
         }
     }
-    pub fn get_def<T: FromStr>(&self, section: &str, key: &str, default: T) -> T {
-        let s = self.get_raw(section, key);
-        match s {
-            Some(x) => x.parse().unwrap_or(default),
-            None => default,
-        }
-    }
-    pub fn get_vec<T>(&self, section: &str, key: &str, default: &[T]) -> Vec<T>
+    pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
         where T: FromStr + Copy + Clone
     {
         let s = self.get_raw(section, key);
         match s {
             Some(x) => {
-                x.split(',')
-                 .zip(default)
-                 .map(|(s, &d)| s.trim().parse().unwrap_or(d))
-                 .collect()
+                let parse_vec = |x: &String| -> Option<Vec<T>> {
+                    let mut result: Vec<T> = Vec::new();
+                    for item in x.split(',') {
+                        if let Some(value) = item.trim().parse().ok() {
+                            result.push(value);
+                        } else {
+                            return None;
+                        }
+                    }
+                    Some(result)
+                };
+                parse_vec(x)
             }
-            None => default.to_vec(),
+            None => None,
         }
     }
 }
@@ -148,24 +163,38 @@ mod library_test {
     use super::*;
 
     #[test]
-    fn test_int() {
-        let ini = Ini::from_buffer("[string]\nabc = 10");
-        let abc: Option<u32> = ini.get("string", "abc");
-        assert_eq!(abc, Some(10));
+    fn test_bool() {
+        let ini = Ini::from_buffer("[string]\nabc = true");
+        let abc: Option<bool> = ini.get("string", "abc");
+        assert_eq!(abc, Some(true));
     }
 
     #[test]
-    fn test_float_def() {
+    fn test_float() {
         let ini = Ini::from_string("[section]\nname=10.5");
-        let name: f64 = ini.get_def("section", "name", 0.0);
-        assert_eq!(name, 10.5);
+        let name: Option<f64> = ini.get("section", "name");
+        assert_eq!(name, Some(10.5));
     }
 
     #[test]
     fn test_float_vec() {
         let ini = Ini::from_string("[section]\nname=1.2, 3.4, 5.6");
-        let name: Vec<f64> = ini.get_vec("section", "name", &[0.0, 0.0, 0.0]);
-        assert_eq!(name, [1.2, 3.4, 5.6]);
+        let name: Option<Vec<f64>> = ini.get_vec("section", "name");
+        assert_eq!(name, Some(vec![1.2, 3.4, 5.6]));
+    }
+
+    #[test]
+    fn test_parse_error() {
+        let ini = Ini::from_string("[section]\nlist = 1, 2, --, 4");
+        let name: Option<Vec<u8>> = ini.get_vec("section", "list");
+        assert_eq!(name, None);
+    }
+
+    #[test]
+    fn test_get_or_macro() {
+        let ini = Ini::from_string("[section]\nlist = 1, 2, --, 4");
+        let with_value: Vec<u8> = get_vec_or!(ini, "section", "list", vec![1, 2, 3, 4]);
+        assert_eq!(with_value, vec![1, 2, 3, 4]);
     }
 }
 
