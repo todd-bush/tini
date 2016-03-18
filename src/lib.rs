@@ -10,7 +10,12 @@ type Section = HashMap<String, String>;
 type IniParsed = HashMap<String, Section>;
 
 #[derive(Debug)]
-pub struct Ini(IniParsed);
+pub struct Ini {
+    data: IniParsed,
+
+    build_section: Section,
+    last_section_name: String,
+}
 
 #[macro_export]
 macro_rules! get_or {
@@ -28,7 +33,11 @@ macro_rules! get_vec_or {
 
 impl Ini {
     pub fn new() -> Ini {
-        Ini(IniParsed::new())
+        Ini {
+            data: IniParsed::new(),
+            build_section: Section::new(),
+            last_section_name: String::new(),
+        }
     }
     fn from_string(string: &str) -> Ini {
         let mut result = Ini::new();
@@ -38,7 +47,7 @@ impl Ini {
             match parse_line(&line) {
                 Parsed::Section(name) => {
                     if section_name.len() != 0 {
-                        result.0.insert(section_name, entry_list.clone());
+                        result.data.insert(section_name, entry_list.clone());
                         entry_list.clear();
                     }
                     section_name = name;
@@ -52,7 +61,7 @@ impl Ini {
         }
         // add last section
         if section_name.len() != 0 {
-            result.0.insert(section_name, entry_list.clone());
+            result.data.insert(section_name, entry_list.clone());
             entry_list.clear();
         }
         result
@@ -69,6 +78,27 @@ impl Ini {
         Ini::from_string(&buf.into())
     }
 
+    pub fn section<S: Into<String>>(&mut self, name: S) -> &mut Self {
+        if self.last_section_name.len() != 0 {
+            self.data.insert(self.last_section_name.clone(), self.build_section.clone());
+            self.build_section.clear()
+        }
+        self.last_section_name = name.into();
+        self
+    }
+    pub fn item<S: Into<String>>(&mut self, name: S, value: S) -> &mut Self {
+        self.build_section.insert(name.into(), value.into());
+        self
+    }
+    pub fn build(&mut self) -> Ini {
+        let result = self.section("").data.clone();
+        Ini {
+            data: result,
+            build_section: Section::new(),
+            last_section_name: String::new(),
+        }
+    }
+
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
         let file = try!(File::create(path));
         let mut writer = BufWriter::new(file);
@@ -82,7 +112,7 @@ impl Ini {
     }
 
     fn get_raw(&self, section: &str, key: &str) -> Option<&String> {
-        let s = self.0.get(section);
+        let s = self.data.get(section);
         match s {
             Some(hm) => hm.get(key),
             None => None,
@@ -115,7 +145,7 @@ impl Ini {
 impl fmt::Display for Ini {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut buffer = String::new();
-        for section in &self.0 {
+        for section in &self.data {
             buffer.push_str(&format!("[{}]\n", section.0));
             for (key, value) in section.1.iter() {
                 buffer.push_str(&format!("{} = {}\n", key, value));
@@ -124,30 +154,6 @@ impl fmt::Display for Ini {
         // remove last '\n'
         buffer.pop();
         write!(f, "{}", buffer)
-    }
-}
-
-pub struct IniBuilder(IniParsed, Section, String);
-
-impl IniBuilder {
-    pub fn new() -> IniBuilder {
-        IniBuilder(HashMap::new(), HashMap::new(), String::new())
-    }
-    pub fn section<S: Into<String>>(&mut self, name: S) -> &mut Self {
-        if self.2.len() != 0 {
-            self.0.insert(self.2.clone(), self.1.clone());
-            self.1.clear()
-        }
-        self.2 = name.into();
-        self
-    }
-    pub fn item<S: Into<String>>(&mut self, name: S, value: S) -> &mut Self {
-        self.1.insert(name.into(), value.into());
-        self
-    }
-    pub fn build(&mut self) -> Ini {
-        let result = self.section("").0.clone();
-        Ini(result)
     }
 }
 
