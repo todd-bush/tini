@@ -1,6 +1,6 @@
 [package]
 name = "tini"
-description = "Tiny ini parser in Rust"
+description = "A tiny ini parser, written in Rust"
 version = "0.1.0"
 authors = ["Alexey Golubev <dr.freecx@gmail.com>", "Vova Abdrakhmanov <369565@gmail.com>"]
 
