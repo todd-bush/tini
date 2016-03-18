@@ -1,6 +1,6 @@
 #[macro_use]
-extern crate tiny_ini;
-use tiny_ini::Ini;
+extern crate tini;
+use tini::Ini;
 
 static INPUT: &'static str = "./example.ini";
 static OUTPUT: &'static str = "./test.ini";

@@ -1,10 +1,11 @@
 [package]
-name = "tiny-ini"
+name = "tini"
+description = "Tiny ini parser in Rust"
 version = "0.1.0"
 authors = ["Alexey Golubev <dr.freecx@gmail.com>", "Vova Abdrakhmanov <369565@gmail.com>"]
 
 [lib]
-name = "tiny_ini"
+name = "tini"
 
 [[example]]
 name = "test"
