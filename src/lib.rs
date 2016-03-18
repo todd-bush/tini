@@ -4,6 +4,7 @@ use std::io::{BufReader, Read, BufWriter, Write};
 use std::fs::File;
 use std::str::FromStr;
 use parser::{parse_line, Parsed};
+use std::fmt;
 
 type Section = HashMap<String, String>;
 type IniParsed = HashMap<String, Section>;
@@ -55,23 +56,16 @@ impl Ini {
         Ini::from_string(&buf.into())
     }
 
-    pub fn to_buffer(&self) -> String {
-        let mut buffer = String::new();
-        for section in &self.0 {
-            buffer.push_str(&format!("[{}]\n", section.0));
-            for (key, value) in section.1.iter() {
-                buffer.push_str(&format!("{} = {}\n", key, value));
-            }
-        }
-        buffer
-    }
-
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) {
         let file = File::create(path).expect(&format!("Can't create `{}`!", path.as_ref().display()));
         let mut writer = BufWriter::new(file);
-        let buffer = self.to_buffer();
-        writer.write_all(buffer.as_bytes())
+        let result: String = format!("{}", self);
+        writer.write_all(result.as_bytes())
               .expect(&format!("Can't write data to `{}`!", path.as_ref().display()));
+    }
+    pub fn to_buffer(&self) -> String {
+        let buffer = format!("{}", self);
+        buffer
     }
 
     fn get_raw(&self, section: &str, key: &str) -> Option<&String> {
@@ -108,6 +102,21 @@ impl Ini {
             }
             None => default.to_vec(),
         }
+    }
+}
+
+impl fmt::Display for Ini {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut buffer = String::new();
+        for section in &self.0 {
+            buffer.push_str(&format!("[{}]\n", section.0));
+            for (key, value) in section.1.iter() {
+                buffer.push_str(&format!("{} = {}\n", key, value));
+            }
+        }
+        // remove last '\n'
+        buffer.pop();
+        write!(f, "{}", buffer)
     }
 }
 
