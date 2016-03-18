@@ -28,12 +28,12 @@ macro_rules! get_vec_or {
 
 impl Ini {
     pub fn new() -> Ini {
-        Ini(HashMap::new())
+        Ini(IniParsed::new())
     }
     fn from_string(string: &str) -> Ini {
         let mut result = Ini::new();
         let mut section_name = String::new();
-        let mut entry_list = HashMap::new();
+        let mut entry_list = Section::new();
         for (i, line) in string.lines().enumerate() {
             match parse_line(&line) {
                 Parsed::Section(name) => {
@@ -101,18 +101,11 @@ impl Ini {
         let s = self.get_raw(section, key);
         match s {
             Some(x) => {
-                let parse_vec = |x: &String| -> Option<Vec<T>> {
-                    let mut result: Vec<T> = Vec::new();
-                    for item in x.split(',') {
-                        if let Some(value) = item.trim().parse().ok() {
-                            result.push(value);
-                        } else {
-                            return None;
-                        }
-                    }
-                    Some(result)
-                };
-                parse_vec(x)
+                let parsed: Vec<Option<T>> = x.split(',').map(|s| s.trim().parse().ok()).collect();
+                if parsed.iter().any(|e| e.is_none()) {
+                    return None;
+                }
+                Some(parsed.iter().map(|s| s.unwrap()).collect())
             }
             None => None,
         }
