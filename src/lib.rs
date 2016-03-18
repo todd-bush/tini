@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::collections::HashMap;
-use std::io::{BufReader, Read, BufWriter, Write};
+use std::io::{self, BufReader, Read, BufWriter, Write};
 use std::fs::File;
 use std::str::FromStr;
 use parser::{parse_line, Parsed};
@@ -44,24 +44,23 @@ impl Ini {
         result
     }
 
-    pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Ini {
-        let file = File::open(path).expect(&format!("Can't open `{}`!", path.as_ref().display()));
+    pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Result<Ini, io::Error> {
+        let file = try!(File::open(path));
         let mut reader = BufReader::new(file);
         let mut buffer = String::new();
-        let _ = reader.read_to_string(&mut buffer)
-                      .expect(&format!("Can't read `{}`!", path.as_ref().display()));
-        Ini::from_string(&buffer)
+        try!(reader.read_to_string(&mut buffer));
+        Ok(Ini::from_string(&buffer))
     }
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
 
-    pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) {
-        let file = File::create(path).expect(&format!("Can't create `{}`!", path.as_ref().display()));
+    pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
+        let file = try!(File::create(path));
         let mut writer = BufWriter::new(file);
         let result: String = format!("{}", self);
-        writer.write_all(result.as_bytes())
-              .expect(&format!("Can't write data to `{}`!", path.as_ref().display()));
+        try!(writer.write_all(result.as_bytes()));
+        Ok(())
     }
     pub fn to_buffer(&self) -> String {
         let buffer = format!("{}", self);
@@ -150,8 +149,7 @@ mod library_test {
 
     #[test]
     fn test_int() {
-        let input: String = "[string]\nabc = 10".to_owned();
-        let ini = Ini::from_buffer(input);
+        let ini = Ini::from_buffer("[string]\nabc = 10");
         let abc: Option<u32> = ini.get("string", "abc");
         assert_eq!(abc, Some(10));
     }
