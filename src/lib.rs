@@ -39,55 +39,6 @@ use std::str::FromStr;
 use parser::{parse_line, Parsed};
 use std::fmt;
 
-
-#[macro_export]
-/// Get record with the default value.
-///
-/// If the item contains a mistake, you can use the default value for the correct replacement.
-///
-/// ```
-/// #[macro_use]
-/// extern crate tini;
-/// use tini::Ini;
-///
-/// fn main() {
-///     let conf = Ini::new().section("test")
-///                          .item("pi", "~3.14")
-///                          .end();
-///     let result: f32 = get_or!(conf, "test", "pi", std::f32::consts::PI);
-///     assert_eq!(result, std::f32::consts::PI);
-/// }
-/// ```
-macro_rules! get_or {
-    ($o:ident, $s:expr, $k:expr, $d:expr) => {
-        $o.get($s, $k).unwrap_or($d)
-    }
-}
-
-#[macro_export]
-/// Get vector record with the default value.
-///
-/// If the item contains a mistake, you can use the default value for the correct replacement.
-///
-/// ```
-/// #[macro_use]
-/// extern crate tini;
-/// use tini::Ini;
-///
-/// fn main() {
-///     let conf = Ini::new().section("test")
-///                          .item("list", "1, 2, --, 4")
-///                          .end();
-///     let result = get_vec_or!(conf, "test", "list", vec![1, 2, 3, 4]);
-///     assert_eq!(result, vec![1, 2, 3, 4]);
-/// }
-/// ```
-macro_rules! get_vec_or {
-    ($o:ident, $s:expr, $k:expr, $d:expr) => {
-        $o.get_vec($s, $k).unwrap_or($d)
-    }
-}
-
 type Section = HashMap<String, String>;
 type IniParsed = HashMap<String, Section>;
 
@@ -255,7 +206,7 @@ impl Ini {
     }
     /// Get vector value of key in section
     ///
-    /// The function returns None if one of the elements can not be parsed.
+    /// The function returns `None` if one of the elements can not be parsed.
     ///
     /// # Example
     /// ```
@@ -332,7 +283,7 @@ mod library_test {
     #[test]
     fn test_get_or_macro() {
         let ini = Ini::from_string("[section]\nlist = 1, 2, --, 4");
-        let with_value: Vec<u8> = get_vec_or!(ini, "section", "list", vec![1, 2, 3, 4]);
+        let with_value: Vec<u8> = ini.get_vec("section", "list").unwrap_or(vec![1, 2, 3, 4]);
         assert_eq!(with_value, vec![1, 2, 3, 4]);
     }
 }
