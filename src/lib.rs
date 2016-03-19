@@ -13,7 +13,7 @@ type IniParsed = HashMap<String, Section>;
 pub struct Ini {
     data: IniParsed,
 
-    build_section: Section,
+    last_section: Section,
     last_section_name: String,
 }
 
@@ -35,36 +35,21 @@ impl Ini {
     pub fn new() -> Ini {
         Ini {
             data: IniParsed::new(),
-            build_section: Section::new(),
+            last_section: Section::new(),
             last_section_name: String::new(),
         }
     }
     fn from_string(string: &str) -> Ini {
         let mut result = Ini::new();
-        let mut section_name = String::new();
-        let mut entry_list = Section::new();
         for (i, line) in string.lines().enumerate() {
             match parse_line(&line) {
-                Parsed::Section(name) => {
-                    if section_name.len() != 0 {
-                        result.data.insert(section_name, entry_list.clone());
-                        entry_list.clear();
-                    }
-                    section_name = name;
-                }
-                Parsed::Value(name, value) => {
-                    entry_list.insert(name, value);
-                }
+                Parsed::Section(name) => result = result.section(name),
+                Parsed::Value(name, value) => result = result.item(name, value),
                 Parsed::Error(msg) => println!("line {}: error: {}", i, msg),
                 _ => (),
             };
         }
-        // add last section
-        if section_name.len() != 0 {
-            result.data.insert(section_name, entry_list.clone());
-            entry_list.clear();
-        }
-        result
+        result.append()
     }
 
     pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Result<Ini, io::Error> {
@@ -78,25 +63,21 @@ impl Ini {
         Ini::from_string(&buf.into())
     }
 
-    pub fn section<S: Into<String>>(&mut self, name: S) -> &mut Self {
+    pub fn section<S: Into<String>>(mut self, name: S) -> Self {
         if self.last_section_name.len() != 0 {
-            self.data.insert(self.last_section_name.clone(), self.build_section.clone());
-            self.build_section.clear()
+            self = self.append()
         }
         self.last_section_name = name.into();
         self
     }
-    pub fn item<S: Into<String>>(&mut self, name: S, value: S) -> &mut Self {
-        self.build_section.insert(name.into(), value.into());
+    pub fn item<S: Into<String>>(mut self, name: S, value: S) -> Self {
+        self.last_section.insert(name.into(), value.into());
         self
     }
-    pub fn build(&mut self) -> Ini {
-        let result = self.section("").data.clone();
-        Ini {
-            data: result,
-            build_section: Section::new(),
-            last_section_name: String::new(),
-        }
+    pub fn append(mut self) -> Ini {
+        self.data.insert(self.last_section_name.clone(), self.last_section.clone());
+        self.last_section.clear();
+        self
     }
 
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {

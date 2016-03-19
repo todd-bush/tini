@@ -24,7 +24,7 @@ fn main() {
                    .section("section_two")
                    .item("c", "3")
                    .item("d", "4")
-                   .build();
+                   .append();
     println!(">> builded `{}` config\n{}\n{}\n{}",
              OUTPUT,
              SPLIT,
