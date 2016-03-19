@@ -131,7 +131,7 @@ impl Ini {
     /// use std::path::Path;
     /// use tini::Ini;
     ///
-    /// let path = Path::new("./example.ini");
+    /// let path = Path::new("./examples/example.ini");
     /// let conf = Ini::from_file(path);
     /// assert!(conf.ok().is_some());
     /// ```
@@ -141,7 +141,7 @@ impl Ini {
     /// ```
     /// use tini::Ini;
     ///
-    /// let conf = Ini::from_file("./example.ini");
+    /// let conf = Ini::from_file("./examples/example.ini");
     /// assert!(conf.ok().is_some());
     /// ```
     pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Result<Ini, io::Error> {
