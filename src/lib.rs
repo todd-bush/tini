@@ -1,3 +1,36 @@
+//! _tiny &mdash; a **t**iny **ini**-file reader and writer_
+//!
+//! This small library provides basic functions to operate with ini-files
+//! # Examples
+//! ## Read from buffer and get string values
+//! ````
+//! use tini::Ini;
+//!
+//! let conf = Ini::from_buffer(["[search]",
+//!                              "g = google.com",
+//!                              "dd = duckduckgo.com"].join("\n"));
+//!
+//! let g: String = conf.get("search", "g").unwrap();
+//! let dd: String = conf.get("search", "dd").unwrap();
+//!
+//! assert_eq!(g, "google.com");
+//! assert_eq!(dd, "duckduckgo.com");
+//! ````
+//! ## Construct in program and get vectors
+//! ````
+//! use tini::Ini;
+//!
+//! let conf = Ini::new().section("floats")
+//!                      .item("consts", "3.1416, 2.7183")
+//!                      .section("integers")
+//!                      .item("lost", "4,8,15,16,23,42")
+//!                      .append();
+//! let consts: Vec<f64> = conf.get_vec("floats", "consts").unwrap();
+//! let lost: Vec<i32> = conf.get_vec("integers", "lost").unwrap();
+//!
+//! assert_eq!(consts, [3.1416, 2.7183]);
+//! assert_eq!(lost, [4, 8, 15, 16, 23, 42]);
+//! ````
 use std::path::Path;
 use std::collections::HashMap;
 use std::io::{self, BufReader, Read, BufWriter, Write};
@@ -6,16 +39,6 @@ use std::str::FromStr;
 use parser::{parse_line, Parsed};
 use std::fmt;
 
-type Section = HashMap<String, String>;
-type IniParsed = HashMap<String, Section>;
-
-#[derive(Debug)]
-pub struct Ini {
-    data: IniParsed,
-
-    last_section: Section,
-    last_section_name: String,
-}
 
 #[macro_export]
 macro_rules! get_or {
@@ -29,6 +52,19 @@ macro_rules! get_vec_or {
     ($o:ident, $s:expr, $k:expr, $d:expr) => {
         $o.get_vec($s, $k).unwrap_or($d)
     }
+}
+
+
+type Section = HashMap<String, String>;
+type IniParsed = HashMap<String, Section>;
+
+/// Structure for INI-file data
+#[derive(Debug)]
+pub struct Ini {
+    data: IniParsed,
+
+    last_section: Section,
+    last_section_name: String,
 }
 
 impl Ini {
@@ -51,7 +87,7 @@ impl Ini {
         }
         result.append()
     }
-
+    /// Construct Ini from file
     pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Result<Ini, io::Error> {
         let file = try!(File::open(path));
         let mut reader = BufReader::new(file);
@@ -59,10 +95,11 @@ impl Ini {
         try!(reader.read_to_string(&mut buffer));
         Ok(Ini::from_string(&buffer))
     }
+    /// Construct Ini from buffer
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
-
+    /// Add section to Ini. This function appends previous section
     pub fn section<S: Into<String>>(mut self, name: S) -> Self {
         if self.last_section_name.len() != 0 {
             self = self.append()
@@ -70,16 +107,18 @@ impl Ini {
         self.last_section_name = name.into();
         self
     }
+    /// Add key-value pair to last section
     pub fn item<S: Into<String>>(mut self, name: S, value: S) -> Self {
         self.last_section.insert(name.into(), value.into());
         self
     }
+    /// Append last created section to Ini
     pub fn append(mut self) -> Ini {
         self.data.insert(self.last_section_name.clone(), self.last_section.clone());
         self.last_section.clear();
         self
     }
-
+    /// Write Ini to file
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
         let file = try!(File::create(path));
         let mut writer = BufWriter::new(file);
@@ -87,6 +126,7 @@ impl Ini {
         try!(writer.write_all(result.as_bytes()));
         Ok(())
     }
+    /// Write Ini to buffer
     pub fn to_buffer(&self) -> String {
         let buffer = format!("{}", self);
         buffer
@@ -99,6 +139,7 @@ impl Ini {
             None => None,
         }
     }
+    /// Get scalar value of key in section
     pub fn get<T: FromStr>(&self, section: &str, key: &str) -> Option<T> {
         let data = self.get_raw(section, key);
         match data {
@@ -106,6 +147,7 @@ impl Ini {
             None => None,
         }
     }
+    /// Get vector value of key in section
     pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
         where T: FromStr + Copy + Clone
     {
