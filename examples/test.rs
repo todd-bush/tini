@@ -8,7 +8,7 @@ static SPLIT: &'static str = "=-------------------------------------------------
 
 fn main() {
     let config = Ini::from_file(INPUT).unwrap();
-    println!(">> readed `{}` config file\n{}\n{}\n{}",
+    println!(">> read `{}` config file\n{}\n{}\n{}",
              INPUT,
              SPLIT,
              config,
@@ -25,7 +25,7 @@ fn main() {
                    .item("c", "3")
                    .item("d", "4")
                    .append();
-    println!(">> builded `{}` config\n{}\n{}\n{}",
+    println!(">> built `{}` config\n{}\n{}\n{}",
              OUTPUT,
              SPLIT,
              test,
