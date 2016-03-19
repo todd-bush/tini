@@ -41,6 +41,23 @@ use std::fmt;
 
 
 #[macro_export]
+/// Get record with the default value.
+/// 
+/// If the item contains a mistake, you can use the default value for the correct replacement.
+/// 
+/// ```
+/// #[macro_use]
+/// extern crate tini;
+/// use tini::Ini;
+/// 
+/// fn main() {
+///     let conf = Ini::new().section("test")
+///                          .item("pi", "~3.14")
+///                          .append();
+///     let result: f32 = get_or!(conf, "test", "pi", std::f32::consts::PI);
+///     assert_eq!(result, std::f32::consts::PI);
+/// }
+/// ```
 macro_rules! get_or {
     ($o:ident, $s:expr, $k:expr, $d:expr) => {
         $o.get($s, $k).unwrap_or($d)
@@ -48,12 +65,28 @@ macro_rules! get_or {
 }
 
 #[macro_export]
+/// Get vector record with the default value.
+///
+/// If the item contains a mistake, you can use the default value for the correct replacement.
+/// 
+/// ```
+/// #[macro_use]
+/// extern crate tini;
+/// use tini::Ini;
+/// 
+/// fn main() {
+///     let conf = Ini::new().section("test")
+///                          .item("list", "1, 2, --, 4")
+///                          .append();
+///     let result = get_vec_or!(conf, "test", "list", vec![1, 2, 3, 4]);
+///     assert_eq!(result, vec![1, 2, 3, 4]);
+/// }
+/// ```
 macro_rules! get_vec_or {
     ($o:ident, $s:expr, $k:expr, $d:expr) => {
         $o.get_vec($s, $k).unwrap_or($d)
     }
 }
-
 
 type Section = HashMap<String, String>;
 type IniParsed = HashMap<String, Section>;
@@ -61,6 +94,7 @@ type IniParsed = HashMap<String, Section>;
 /// Structure for INI-file data
 #[derive(Debug)]
 pub struct Ini {
+    #[doc(hidden)]
     data: IniParsed,
 
     last_section: Section,
@@ -68,6 +102,7 @@ pub struct Ini {
 }
 
 impl Ini {
+    /// Create an empty Ini
     pub fn new() -> Ini {
         Ini {
             data: IniParsed::new(),
@@ -88,6 +123,27 @@ impl Ini {
         result.append()
     }
     /// Construct Ini from file
+    ///
+    /// # Examples
+    /// You may use Path
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use tini::Ini;
+    ///
+    /// let path = Path::new("./example.ini");
+    /// let conf = Ini::from_file(path);
+    /// assert!(conf.ok().is_some());
+    /// ```
+    ///
+    /// or `&str`
+    /// 
+    /// ```
+    /// use tini::Ini;
+    ///
+    /// let conf = Ini::from_file("./example.ini");
+    /// assert!(conf.ok().is_some());
+    /// ```
     pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Result<Ini, io::Error> {
         let file = try!(File::open(path));
         let mut reader = BufReader::new(file);
@@ -96,10 +152,27 @@ impl Ini {
         Ok(Ini::from_string(&buffer))
     }
     /// Construct Ini from buffer
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    /// 
+    /// let conf = Ini::from_buffer("[section]\none = 1");
+    /// let value: Option<u8> = conf.get("section", "one");
+    /// assert_eq!(value, Some(1));
+    /// ```
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
     /// Add section to Ini. This function appends previous section
+    /// 
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    ///
+    /// let conf = Ini::new().section("empty").append();
+    /// assert_eq!(conf.to_buffer(), "[empty]".to_owned());
+    /// ```
     pub fn section<S: Into<String>>(mut self, name: S) -> Self {
         if self.last_section_name.len() != 0 {
             self = self.append()
@@ -108,6 +181,17 @@ impl Ini {
         self
     }
     /// Add key-value pair to last section
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    ///
+    /// let conf = Ini::new().section("test")
+    ///                      .item("value", "10")
+    ///                      .append();
+    /// let value: Option<u8> = conf.get("test", "value");
+    /// assert_eq!(value, Some(10));
+    /// ```
     pub fn item<S: Into<String>>(mut self, name: S, value: S) -> Self {
         self.last_section.insert(name.into(), value.into());
         self
@@ -118,7 +202,7 @@ impl Ini {
         self.last_section.clear();
         self
     }
-    /// Write Ini to file
+    /// Write Ini to file. This function is similar to `from_file` in use.
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
         let file = try!(File::create(path));
         let mut writer = BufWriter::new(file);
@@ -127,6 +211,19 @@ impl Ini {
         Ok(())
     }
     /// Write Ini to buffer
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    /// 
+    /// let conf = Ini::from_buffer("[section]\none = 1");
+    /// // you may use `conf.to_buffer()`
+    /// let value: String = conf.to_buffer();
+    /// // or format!("{}", conf);
+    /// // let value: String = format!("{}", conf);
+    /// // but the result will be the same
+    /// assert_eq!(value, "[section]\none = 1".to_owned());
+    /// ```
     pub fn to_buffer(&self) -> String {
         let buffer = format!("{}", self);
         buffer
@@ -140,6 +237,15 @@ impl Ini {
         }
     }
     /// Get scalar value of key in section
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    /// 
+    /// let conf = Ini::from_buffer("[section]\none = 1");
+    /// let value: Option<u8> = conf.get("section", "one");
+    /// assert_eq!(value, Some(1));
+    /// ```
     pub fn get<T: FromStr>(&self, section: &str, key: &str) -> Option<T> {
         let data = self.get_raw(section, key);
         match data {
@@ -148,6 +254,17 @@ impl Ini {
         }
     }
     /// Get vector value of key in section
+    ///
+    /// The function returns None if one of the elements can not be parsed.
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    /// 
+    /// let conf = Ini::from_buffer("[section]\nlist = 1, 2, 3, 4");
+    /// let value: Option<Vec<u8>> = conf.get_vec("section", "list");
+    /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
+    /// ```
     pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
         where T: FromStr + Copy
     {
