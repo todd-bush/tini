@@ -23,8 +23,7 @@
 //! let conf = Ini::new().section("floats")
 //!                      .item("consts", "3.1416, 2.7183")
 //!                      .section("integers")
-//!                      .item("lost", "4,8,15,16,23,42")
-//!                      .end();
+//!                      .item("lost", "4,8,15,16,23,42");
 //! let consts: Vec<f64> = conf.get_vec("floats", "consts").unwrap();
 //! let lost: Vec<i32> = conf.get_vec("integers", "lost").unwrap();
 //!
@@ -47,8 +46,6 @@ type IniParsed = HashMap<String, Section>;
 pub struct Ini {
     #[doc(hidden)]
     data: IniParsed,
-
-    last_section: Section,
     last_section_name: String,
 }
 
@@ -57,7 +54,6 @@ impl Ini {
     pub fn new() -> Ini {
         Ini {
             data: IniParsed::new(),
-            last_section: Section::new(),
             last_section_name: String::new(),
         }
     }
@@ -71,7 +67,7 @@ impl Ini {
                 _ => (),
             };
         }
-        result.end()
+        result
     }
     /// Construct Ini from file
     ///
@@ -115,20 +111,18 @@ impl Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
-    /// Add new section to Ini. This function also appends previous section to Ini
+    /// Add new empty section to Ini
     ///
     /// # Example
     /// ```
     /// use tini::Ini;
     ///
-    /// let conf = Ini::new().section("empty").end();
+    /// let conf = Ini::new().section("empty");
     /// assert_eq!(conf.to_buffer(), "[empty]".to_owned());
     /// ```
     pub fn section<S: Into<String>>(mut self, name: S) -> Self {
-        if self.last_section_name.len() != 0 {
-            self = self.end()
-        }
         self.last_section_name = name.into();
+        self.data.insert(self.last_section_name.clone(), Section::new());
         self
     }
     /// Add key-value pair to last section
@@ -138,19 +132,18 @@ impl Ini {
     /// use tini::Ini;
     ///
     /// let conf = Ini::new().section("test")
-    ///                      .item("value", "10")
-    ///                      .end();
+    ///                      .item("value", "10");
+    ///
     /// let value: Option<u8> = conf.get("test", "value");
     /// assert_eq!(value, Some(10));
     /// ```
     pub fn item<S: Into<String>>(mut self, name: S, value: S) -> Self {
-        self.last_section.insert(name.into(), value.into());
-        self
-    }
-    /// Append last created section to Ini
-    pub fn end(mut self) -> Ini {
-        self.data.insert(self.last_section_name.clone(), self.last_section.clone());
-        self.last_section.clear();
+        {
+            let last_section = self.data
+                                   .entry(self.last_section_name.clone())
+                                   .or_insert(Section::new());
+            last_section.insert(name.into(), value.into());
+        }
         self
     }
     /// Write Ini to file. This function is similar to `from_file` in use.

@@ -18,8 +18,7 @@ fn main() {
                    .item("b", "2")
                    .section("section_two")
                    .item("c", "3")
-                   .item("d", "4")
-                   .end();
+                   .item("d", "4");
     println!(">> built `{0}` config\n{1}\n{2}\n{1}", OUTPUT, SPLIT, test);
     test.to_file(OUTPUT).unwrap();
 }
