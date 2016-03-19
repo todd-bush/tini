@@ -149,7 +149,7 @@ impl Ini {
     }
     /// Get vector value of key in section
     pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
-        where T: FromStr + Copy + Clone
+        where T: FromStr + Copy
     {
         let s = self.get_raw(section, key);
         match s {
