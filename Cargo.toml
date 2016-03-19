@@ -10,4 +10,7 @@ name = "tini"
 [[example]]
 name = "test"
 
+[[example]]
+name = "read"
+
 [dependencies]

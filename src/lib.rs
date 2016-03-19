@@ -1,4 +1,4 @@
-//! _tiny &mdash; a **t**iny **ini**-file reader and writer_
+//! _**tini** is a **t**iny **ini**-file reader and writer_
 //!
 //! This small library provides basic functions to operate with ini-files
 //! # Examples
@@ -24,7 +24,7 @@
 //!                      .item("consts", "3.1416, 2.7183")
 //!                      .section("integers")
 //!                      .item("lost", "4,8,15,16,23,42")
-//!                      .append();
+//!                      .end();
 //! let consts: Vec<f64> = conf.get_vec("floats", "consts").unwrap();
 //! let lost: Vec<i32> = conf.get_vec("integers", "lost").unwrap();
 //!
@@ -42,18 +42,18 @@ use std::fmt;
 
 #[macro_export]
 /// Get record with the default value.
-/// 
+///
 /// If the item contains a mistake, you can use the default value for the correct replacement.
-/// 
+///
 /// ```
 /// #[macro_use]
 /// extern crate tini;
 /// use tini::Ini;
-/// 
+///
 /// fn main() {
 ///     let conf = Ini::new().section("test")
 ///                          .item("pi", "~3.14")
-///                          .append();
+///                          .end();
 ///     let result: f32 = get_or!(conf, "test", "pi", std::f32::consts::PI);
 ///     assert_eq!(result, std::f32::consts::PI);
 /// }
@@ -68,16 +68,16 @@ macro_rules! get_or {
 /// Get vector record with the default value.
 ///
 /// If the item contains a mistake, you can use the default value for the correct replacement.
-/// 
+///
 /// ```
 /// #[macro_use]
 /// extern crate tini;
 /// use tini::Ini;
-/// 
+///
 /// fn main() {
 ///     let conf = Ini::new().section("test")
 ///                          .item("list", "1, 2, --, 4")
-///                          .append();
+///                          .end();
 ///     let result = get_vec_or!(conf, "test", "list", vec![1, 2, 3, 4]);
 ///     assert_eq!(result, vec![1, 2, 3, 4]);
 /// }
@@ -120,7 +120,7 @@ impl Ini {
                 _ => (),
             };
         }
-        result.append()
+        result.end()
     }
     /// Construct Ini from file
     ///
@@ -137,7 +137,7 @@ impl Ini {
     /// ```
     ///
     /// or `&str`
-    /// 
+    ///
     /// ```
     /// use tini::Ini;
     ///
@@ -156,7 +156,7 @@ impl Ini {
     /// # Example
     /// ```
     /// use tini::Ini;
-    /// 
+    ///
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// let value: Option<u8> = conf.get("section", "one");
     /// assert_eq!(value, Some(1));
@@ -164,18 +164,18 @@ impl Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
-    /// Add section to Ini. This function appends previous section
-    /// 
+    /// Add new section to Ini. This function also appends previous section to Ini
+    ///
     /// # Example
     /// ```
     /// use tini::Ini;
     ///
-    /// let conf = Ini::new().section("empty").append();
+    /// let conf = Ini::new().section("empty").end();
     /// assert_eq!(conf.to_buffer(), "[empty]".to_owned());
     /// ```
     pub fn section<S: Into<String>>(mut self, name: S) -> Self {
         if self.last_section_name.len() != 0 {
-            self = self.append()
+            self = self.end()
         }
         self.last_section_name = name.into();
         self
@@ -188,7 +188,7 @@ impl Ini {
     ///
     /// let conf = Ini::new().section("test")
     ///                      .item("value", "10")
-    ///                      .append();
+    ///                      .end();
     /// let value: Option<u8> = conf.get("test", "value");
     /// assert_eq!(value, Some(10));
     /// ```
@@ -197,7 +197,7 @@ impl Ini {
         self
     }
     /// Append last created section to Ini
-    pub fn append(mut self) -> Ini {
+    pub fn end(mut self) -> Ini {
         self.data.insert(self.last_section_name.clone(), self.last_section.clone());
         self.last_section.clear();
         self
@@ -215,7 +215,7 @@ impl Ini {
     /// # Example
     /// ```
     /// use tini::Ini;
-    /// 
+    ///
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// // you may use `conf.to_buffer()`
     /// let value: String = conf.to_buffer();
@@ -241,7 +241,7 @@ impl Ini {
     /// # Example
     /// ```
     /// use tini::Ini;
-    /// 
+    ///
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// let value: Option<u8> = conf.get("section", "one");
     /// assert_eq!(value, Some(1));
@@ -260,7 +260,7 @@ impl Ini {
     /// # Example
     /// ```
     /// use tini::Ini;
-    /// 
+    ///
     /// let conf = Ini::from_buffer("[section]\nlist = 1, 2, 3, 4");
     /// let value: Option<Vec<u8>> = conf.get_vec("section", "list");
     /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
