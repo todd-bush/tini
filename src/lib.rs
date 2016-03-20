@@ -111,18 +111,17 @@ impl Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
-    /// Add new empty section to Ini
+    /// Set section name for following `[item()](#method.item)`s, but don't create section
     ///
     /// # Example
     /// ```
     /// use tini::Ini;
     ///
     /// let conf = Ini::new().section("empty");
-    /// assert_eq!(conf.to_buffer(), "[empty]".to_owned());
+    /// assert_eq!(conf.to_buffer(), String::new());
     /// ```
     pub fn section<S: Into<String>>(mut self, name: S) -> Self {
         self.last_section_name = name.into();
-        self.data.insert(self.last_section_name.clone(), Section::new());
         self
     }
     /// Add key-value pair to last section
