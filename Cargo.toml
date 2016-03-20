@@ -6,7 +6,7 @@ authors = ["Alexey Golubev <dr.freecx@gmail.com>", "Vova Abdrakhmanov <369565@gm
 documentation = "http://pinecrew.github.io/tini/tini/"
 repository = "https://github.com/pinecrew/tini"
 keywords = ["ini", "configuration", "conf", "cfg"]
-licence = "BSD"
+license = "BSD-3-Clause"
 
 [lib]
 name = "tini"
