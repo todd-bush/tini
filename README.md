@@ -29,7 +29,7 @@ fn main() {
     // Read name3 key from section_one
     let name3: String = config.get("section_one", "name3").unwrap();
     // Read list of values
-    let frst4: Vec<u8> = config.get("section_three", "frst4").unwrap();
+    let frst4: Vec<bool> = config.get_vec("section_three", "frst4").unwrap();
     println!("name3 = {}", name3);
     println!("frst4 = {}", frst4);
     // Result:
