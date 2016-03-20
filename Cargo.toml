@@ -1,8 +1,11 @@
 [package]
 name = "tini"
 description = "A tiny ini parser, written in Rust"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Alexey Golubev <dr.freecx@gmail.com>", "Vova Abdrakhmanov <369565@gmail.com>"]
+documentation = "http://pinecrew.github.io/tini/tini/"
+repository = "https://github.com/pinecrew/tini"
+keywords = ["ini"]
 
 [lib]
 name = "tini"
@@ -12,5 +15,3 @@ name = "test"
 
 [[example]]
 name = "read"
-
-[dependencies]
