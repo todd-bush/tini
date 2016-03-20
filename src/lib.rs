@@ -1,6 +1,16 @@
-//! _**tini** is a **t**iny **ini**-file reader and writer_
+//! _**tini** is a **t**iny **ini**-file parsing library_
 //!
-//! This small library provides basic functions to operate with ini-files
+//! This small library provides basic functions to operate with ini-files.
+//!
+//! Features:
+//!
+//! * no dependencies;
+//! * parsing [from file](struct.Ini.html#method.from_file) and [from buffer](struct.Ini.html#method.from_buffer);
+//! * [convert parsed value to given type](struct.Ini.html#method.get);
+//! * [parse comma-separated lists to vectors](struct.Ini.html#method.get_vec);
+//! * construct new ini-structure with [method chaining](struct.Ini.html#method.item);
+//! * writing [to file](struct.Ini.html#method.to_file) and [to buffer](struct.Ini.html#method.to_buffer).
+//!
 //! # Examples
 //! ## Read from buffer and get string values
 //! ````
@@ -70,6 +80,10 @@ impl Ini {
         result
     }
     /// Construct Ini from file
+    ///
+    /// # Errors
+    /// Errors returned by `File::open()` and `BufReader::read_to_string()`
+    ///
     ///
     /// # Examples
     /// You may use Path
@@ -147,6 +161,9 @@ impl Ini {
         self
     }
     /// Write Ini to file. This function is similar to `from_file` in use.
+    /// # Errors
+    /// Errors returned by `File::create()` and `BufWriter::write_all()`
+    ///
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
         let file = try!(File::create(path));
         let mut writer = BufWriter::new(file);
