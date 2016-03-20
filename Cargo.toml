@@ -1,11 +1,11 @@
 [package]
 name = "tini"
-description = "A tiny ini parser, written in Rust"
+description = "A tiny ini parsing library, written in Rust"
 version = "0.1.1"
 authors = ["Alexey Golubev <dr.freecx@gmail.com>", "Vova Abdrakhmanov <369565@gmail.com>"]
 documentation = "http://pinecrew.github.io/tini/tini/"
 repository = "https://github.com/pinecrew/tini"
-keywords = ["ini"]
+keywords = ["ini", "configuration", "conf", "cfg"]
 
 [lib]
 name = "tini"
