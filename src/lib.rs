@@ -111,7 +111,8 @@ impl Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
-    /// Set section name for following `[item()](#method.item)`s, but don't create section
+    /// Set section name for following [`item()`](#method.item)s. This function doesn't create a
+    /// section.
     ///
     /// # Example
     /// ```
