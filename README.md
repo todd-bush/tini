@@ -3,9 +3,10 @@
 [![Gitter](https://badges.gitter.im/pinecrew/tiny-ini.svg)](https://gitter.im/pinecrew/tiny-ini?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/pinecrew/tini.svg?branch=master)](https://travis-ci.org/pinecrew/tini)
 
-[Documentation](http://pinecrew.github.io/tini/tini/)
+| [Documentation](http://pinecrew.github.io/tini/tini/) |
+[Examples](./examples) |
 
-# Usage
+## Usage
 
 Add `tini` to your `Cargo.toml`, for example:
 ```
@@ -13,9 +14,9 @@ Add `tini` to your `Cargo.toml`, for example:
 tini = "0.1"
 ```
 
-# Examples
+## How to use
 
-* Read ini configuration from file
+#### Read ini configuration from file
 
 ```rust
 extern crate tini;
@@ -36,7 +37,7 @@ fn main() {
 }
 ```
 
-* Create ini configuration and write to file
+#### Create ini configuration and write to file
 
 ```rust
 extern crate tini;
