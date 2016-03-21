@@ -189,11 +189,9 @@ impl Ini {
     }
 
     fn get_raw(&self, section: &str, key: &str) -> Option<&String> {
-        let s = self.data.get(section);
-        match s {
-            Some(hm) => hm.get(key),
-            None => None,
-        }
+        self.data
+            .get(section)
+            .and_then(|x| x.get(key))
     }
     /// Get scalar value of key in section
     ///
@@ -206,11 +204,8 @@ impl Ini {
     /// assert_eq!(value, Some(1));
     /// ```
     pub fn get<T: FromStr>(&self, section: &str, key: &str) -> Option<T> {
-        let data = self.get_raw(section, key);
-        match data {
-            Some(x) => x.parse().ok(),
-            None => None,
-        }
+        self.get_raw(section, key)
+            .and_then(|x| x.parse().ok())
     }
     /// Get vector value of key in section
     ///
@@ -227,17 +222,14 @@ impl Ini {
     pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
         where T: FromStr + Copy
     {
-        let s = self.get_raw(section, key);
-        match s {
-            Some(x) => {
+        self.get_raw(section, key)
+            .and_then(|x| {
                 let parsed: Vec<Option<T>> = x.split(',').map(|s| s.trim().parse().ok()).collect();
                 if parsed.iter().any(|e| e.is_none()) {
                     return None;
                 }
                 Some(parsed.iter().map(|s| s.unwrap()).collect())
-            }
-            None => None,
-        }
+            })
     }
 }
 
