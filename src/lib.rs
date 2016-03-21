@@ -152,12 +152,10 @@ impl Ini {
     /// assert_eq!(value, Some(10));
     /// ```
     pub fn item<S: Into<String>>(mut self, name: S, value: S) -> Self {
-        {
-            let last_section = self.data
-                                   .entry(self.last_section_name.clone())
-                                   .or_insert(Section::new());
-            last_section.insert(name.into(), value.into());
-        }
+        self.data
+            .entry(self.last_section_name.clone())
+            .or_insert(Section::new())
+            .insert(name.into(), value.into());
         self
     }
     /// Write Ini to file. This function is similar to `from_file` in use.
