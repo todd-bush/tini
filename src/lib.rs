@@ -221,7 +221,7 @@ impl Ini {
     /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
     /// ```
     pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
-        where T: FromStr + Copy
+        where T: FromStr
     {
         self.get_raw(section, key)
             .and_then(|x| {
@@ -338,6 +338,13 @@ mod library_test {
         let ini = Ini::from_string("[section]\nname=1.2, 3.4, 5.6");
         let name: Option<Vec<f64>> = ini.get_vec("section", "name");
         assert_eq!(name, Some(vec![1.2, 3.4, 5.6]));
+    }
+
+    #[test]
+    fn test_string_vec() {
+        let ini = Ini::from_string("[section]\nname=a, b, c");
+        let name: Option<Vec<String>> = ini.get_vec("section", "name");
+        assert_eq!(name, Some(vec![String::from("a"), String::from("b"), String::from("c")]));
     }
 
     #[test]
