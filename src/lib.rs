@@ -41,8 +41,9 @@
 //! assert_eq!(lost, [4, 8, 15, 16, 23, 42]);
 //! ````
 use std::path::Path;
-use std::collections::HashMap;
+use std::collections::{HashMap, hash_map};
 use std::io::{self, BufReader, Read, BufWriter, Write};
+use std::iter::Iterator;
 use std::fs::File;
 use std::str::FromStr;
 use parser::{parse_line, Parsed};
@@ -231,20 +232,89 @@ impl Ini {
                 Some(parsed.iter().map(|s| s.unwrap()).collect())
             })
     }
+    /// Iterate over all sections, yielding pairs of section name and iterator
+    /// over the section elements. The concrete iterator element type is
+    /// `(&'a String, std::collections::hash_map::Iter<'a, String, String>)`.
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    ///
+    /// let conf = Ini::new().section("foo")
+    ///                      .item("item", "value")
+    ///                      .item("other", "something")
+    ///                      .section("bar")
+    ///                      .item("one", "1");
+    /// for (section, iter) in conf.iter() {
+    ///   for (key, val) in iter {
+    ///     println!("section: {} key: {} val: {}", section, key, val);
+    ///   }
+    /// }
+    pub fn iter(&self) -> IniIter {
+        IniIter { iter: self.data.iter() }
+    }
+
+    /// Iterate over all sections, yielding pairs of section name and mutable
+    /// iterator over the section elements. The concrete iterator element type is
+    /// `(&'a String, std::collections::hash_map::IterMut<'a, String, String>)`.
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    ///
+    /// let mut conf = Ini::new().section("foo")
+    ///                          .item("item", "value")
+    ///                          .item("other", "something")
+    ///                          .section("bar")
+    ///                          .item("one", "1");
+    /// for (section, iter_mut) in conf.iter_mut() {
+    ///   for (key, val) in iter_mut {
+    ///     *val = String::from("replaced");
+    ///   }
+    /// }
+    pub fn iter_mut(&mut self) -> IniIterMut {
+        IniIterMut { iter: self.data.iter_mut() }
+    }
 }
 
 impl fmt::Display for Ini {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut buffer = String::new();
-        for section in &self.data {
-            buffer.push_str(&format!("[{}]\n", section.0));
-            for (key, value) in section.1.iter() {
+        for (section, iter) in self.iter() {
+            buffer.push_str(&format!("[{}]\n", section));
+            for (key, value) in iter {
                 buffer.push_str(&format!("{} = {}\n", key, value));
             }
         }
         // remove last '\n'
         buffer.pop();
         write!(f, "{}", buffer)
+    }
+}
+
+pub struct IniIter<'a> {
+    iter: hash_map::Iter<'a, String, Section>,
+}
+
+impl<'a> Iterator for IniIter<'a> {
+    type Item = (&'a String, hash_map::Iter<'a, String, String>);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(string, section)| (string, section.iter()))
+    }
+}
+
+pub struct IniIterMut<'a> {
+    iter: hash_map::IterMut<'a, String, Section>,
+}
+
+impl<'a> Iterator for IniIterMut<'a> {
+    type Item = (&'a String, hash_map::IterMut<'a, String, String>);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(string, section)| (string, section.iter_mut()))
     }
 }
 
