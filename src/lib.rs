@@ -225,11 +225,8 @@ impl Ini {
     {
         self.get_raw(section, key)
             .and_then(|x| {
-                let parsed: Vec<Option<T>> = x.split(',').map(|s| s.trim().parse().ok()).collect();
-                if parsed.iter().any(|e| e.is_none()) {
-                    return None;
-                }
-                Some(parsed.iter().map(|s| s.unwrap()).collect())
+                let parsed: Result<Vec<T>,_> = x.split(',').map(|s| s.trim().parse()).collect();
+                parsed.ok()
             })
     }
     /// Iterate over all sections, yielding pairs of section name and iterator
