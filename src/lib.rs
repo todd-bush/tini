@@ -221,15 +221,12 @@ impl Ini {
     /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
     /// ```
     pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
-        where T: FromStr + Copy
+        where T: FromStr
     {
         self.get_raw(section, key)
             .and_then(|x| {
-                let parsed: Vec<Option<T>> = x.split(',').map(|s| s.trim().parse().ok()).collect();
-                if parsed.iter().any(|e| e.is_none()) {
-                    return None;
-                }
-                Some(parsed.iter().map(|s| s.unwrap()).collect())
+                let parsed: Result<Vec<T>,_> = x.split(',').map(|s| s.trim().parse()).collect();
+                parsed.ok()
             })
     }
     /// Iterate over all sections, yielding pairs of section name and iterator
@@ -341,6 +338,13 @@ mod library_test {
         let ini = Ini::from_string("[section]\nname=1.2, 3.4, 5.6");
         let name: Option<Vec<f64>> = ini.get_vec("section", "name");
         assert_eq!(name, Some(vec![1.2, 3.4, 5.6]));
+    }
+
+    #[test]
+    fn test_string_vec() {
+        let ini = Ini::from_string("[section]\nname=a, b, c");
+        let name: Option<Vec<String>> = ini.get_vec("section", "name");
+        assert_eq!(name, Some(vec![String::from("a"), String::from("b"), String::from("c")]));
     }
 
     #[test]
