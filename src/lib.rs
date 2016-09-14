@@ -311,7 +311,7 @@ mod parser {
                 return Parsed::Error("incorrect section syntax".to_owned());
             }
         } else if content.contains('=') {
-            let mut pair = content.split('=').map(|s| s.trim());
+            let mut pair = content.splitn(2, '=').map(|s| s.trim());
             let key = pair.next().unwrap().to_owned();
             let value = pair.next().unwrap().to_owned();
             return Parsed::Value(key, value);
