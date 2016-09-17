@@ -166,8 +166,7 @@ impl Ini {
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
         let file = try!(File::create(path));
         let mut writer = BufWriter::new(file);
-        let result: String = format!("{}", self);
-        try!(writer.write_all(result.as_bytes()));
+        try!(writer.write_all(self.to_buffer().as_bytes()));
         Ok(())
     }
     /// Write Ini to buffer
