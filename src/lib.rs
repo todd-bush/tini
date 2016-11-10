@@ -107,10 +107,10 @@ impl Ini {
     /// assert!(conf.ok().is_some());
     /// ```
     pub fn from_file<S: AsRef<Path> + ?Sized>(path: &S) -> Result<Ini, io::Error> {
-        let file = try!(File::open(path));
+        let file = File::open(path)?;
         let mut reader = BufReader::new(file);
         let mut buffer = String::new();
-        try!(reader.read_to_string(&mut buffer));
+        reader.read_to_string(&mut buffer)?;
         Ok(Ini::from_string(&buffer))
     }
     /// Construct Ini from buffer
@@ -164,9 +164,9 @@ impl Ini {
     /// Errors returned by `File::create()` and `BufWriter::write_all()`
     ///
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
-        let file = try!(File::create(path));
+        let file = File::create(path)?;
         let mut writer = BufWriter::new(file);
-        try!(writer.write_all(self.to_buffer().as_bytes()));
+        writer.write_all(self.to_buffer().as_bytes())?;
         Ok(())
     }
     /// Write Ini to buffer
