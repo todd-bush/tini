@@ -51,7 +51,7 @@ use std::fmt;
 
 type Section = HashMap<String, String>;
 type IniParsed = HashMap<String, Section>;
-type SectionIter = hash_map::Iter<String, String>;
+type SectionIter<'a> = hash_map::Iter<'a, String, String>;
 
 /// Structure for INI-file data
 #[derive(Debug)]
