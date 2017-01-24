@@ -228,6 +228,26 @@ impl Ini {
                 parsed.ok()
             })
     }
+    /// Iterate over a section by a name
+    ///
+    /// # Example
+    /// ```
+    /// use tini::Ini;
+    ///
+    /// let conf = Ini::from_buffer(["[search]",
+    ///                         "g = google.com",
+    ///                         "dd = duckduckgo.com"].join("\n"));
+    /// let search = conf.get_section("search").unwrap();
+    /// for (k, v) in search {
+    ///   println!("{} {}", k, v);
+    /// }
+    /// ```
+    pub fn get_section(&self, section: &str) -> Option<hash_map::Iter<String, String>> {
+        match self.data.get(section) {
+            Some(value) => Some(value.iter()),
+            None => None
+        }
+    }
     /// Iterate over all sections, yielding pairs of section name and iterator
     /// over the section elements. The concrete iterator element type is
     /// `(&'a String, std::collections::hash_map::Iter<'a, String, String>)`.
