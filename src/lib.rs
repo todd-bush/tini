@@ -52,6 +52,7 @@ use std::fmt;
 type Section = HashMap<String, String>;
 type IniParsed = HashMap<String, Section>;
 type SectionIter<'a> = hash_map::Iter<'a, String, String>;
+type SectionIterMut<'a> = hash_map::IterMut<'a, String, String>;
 
 /// Structure for INI-file data
 #[derive(Debug)]
@@ -314,7 +315,7 @@ pub struct IniIter<'a> {
 }
 
 impl<'a> Iterator for IniIter<'a> {
-    type Item = (&'a String, hash_map::Iter<'a, String, String>);
+    type Item = (&'a String, SectionIter<'a>);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -327,7 +328,7 @@ pub struct IniIterMut<'a> {
 }
 
 impl<'a> Iterator for IniIterMut<'a> {
-    type Item = (&'a String, hash_map::IterMut<'a, String, String>);
+    type Item = (&'a String, SectionIterMut<'a>);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
