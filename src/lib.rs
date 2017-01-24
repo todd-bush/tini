@@ -51,6 +51,7 @@ use std::fmt;
 
 type Section = HashMap<String, String>;
 type IniParsed = HashMap<String, Section>;
+type SectionIter = hash_map::Iter<String, String>;
 
 /// Structure for INI-file data
 #[derive(Debug)]
@@ -237,12 +238,12 @@ impl Ini {
     /// let conf = Ini::from_buffer(["[search]",
     ///                         "g = google.com",
     ///                         "dd = duckduckgo.com"].join("\n"));
-    /// let search = conf.get_section("search").unwrap();
+    /// let search = conf.iter_section("search").unwrap();
     /// for (k, v) in search {
-    ///   println!("{} {}", k, v);
+    ///   println!("key: {} value: {}", k, v);
     /// }
     /// ```
-    pub fn get_section(&self, section: &str) -> Option<hash_map::Iter<String, String>> {
+    pub fn iter_section(&self, section: &str) -> Option<SectionIter> {
         match self.data.get(section) {
             Some(value) => Some(value.iter()),
             None => None
