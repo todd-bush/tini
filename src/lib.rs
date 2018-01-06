@@ -41,8 +41,8 @@
 //! assert_eq!(lost, [4, 8, 15, 16, 23, 42]);
 //! ````
 use std::path::Path;
-use std::collections::{HashMap, hash_map};
-use std::io::{self, BufReader, Read, BufWriter, Write};
+use std::collections::{hash_map, HashMap};
+use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::iter::Iterator;
 use std::fs::File;
 use std::str::FromStr;
@@ -57,8 +57,7 @@ type SectionIterMut<'a> = hash_map::IterMut<'a, String, String>;
 /// Structure for INI-file data
 #[derive(Debug)]
 pub struct Ini {
-    #[doc(hidden)]
-    data: IniParsed,
+    #[doc(hidden)] data: IniParsed,
     last_section_name: String,
 }
 
@@ -186,14 +185,11 @@ impl Ini {
     /// assert_eq!(value, "[section]\none = 1".to_owned());
     /// ```
     pub fn to_buffer(&self) -> String {
-        let buffer = format!("{}", self);
-        buffer
+        format!("{}", self)
     }
 
     fn get_raw(&self, section: &str, key: &str) -> Option<&String> {
-        self.data
-            .get(section)
-            .and_then(|x| x.get(key))
+        self.data.get(section).and_then(|x| x.get(key))
     }
     /// Get scalar value of key in section
     ///
@@ -206,8 +202,7 @@ impl Ini {
     /// assert_eq!(value, Some(1));
     /// ```
     pub fn get<T: FromStr>(&self, section: &str, key: &str) -> Option<T> {
-        self.get_raw(section, key)
-            .and_then(|x| x.parse().ok())
+        self.get_raw(section, key).and_then(|x| x.parse().ok())
     }
     /// Get vector value of key in section
     ///
@@ -222,13 +217,15 @@ impl Ini {
     /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
     /// ```
     pub fn get_vec<T>(&self, section: &str, key: &str) -> Option<Vec<T>>
-        where T: FromStr
+    where
+        T: FromStr,
     {
-        self.get_raw(section, key)
-            .and_then(|x| {
-                let parsed: Result<Vec<T>,_> = x.split(',').map(|s| s.trim().parse()).collect();
-                parsed.ok()
-            })
+        self.get_raw(section, key).and_then(|x| {
+            x.split(',')
+                .map(|s| s.trim().parse())
+                .collect::<Result<Vec<T>, _>>()
+                .ok()
+        })
     }
     /// Iterate over a section by a name
     ///
@@ -245,10 +242,7 @@ impl Ini {
     /// }
     /// ```
     pub fn iter_section(&self, section: &str) -> Option<SectionIter> {
-        match self.data.get(section) {
-            Some(value) => Some(value.iter()),
-            None => None
-        }
+        self.data.get(section).map(|value| value.iter())
     }
     /// Iterate over all sections, yielding pairs of section name and iterator
     /// over the section elements. The concrete iterator element type is
@@ -269,7 +263,9 @@ impl Ini {
     ///   }
     /// }
     pub fn iter(&self) -> IniIter {
-        IniIter { iter: self.data.iter() }
+        IniIter {
+            iter: self.data.iter(),
+        }
     }
 
     /// Iterate over all sections, yielding pairs of section name and mutable
@@ -291,7 +287,9 @@ impl Ini {
     ///   }
     /// }
     pub fn iter_mut(&mut self) -> IniIterMut {
-        IniIterMut { iter: self.data.iter_mut() }
+        IniIterMut {
+            iter: self.data.iter_mut(),
+        }
     }
 }
 
@@ -310,6 +308,7 @@ impl fmt::Display for Ini {
     }
 }
 
+#[doc(hidden)]
 pub struct IniIter<'a> {
     iter: hash_map::Iter<'a, String, Section>,
 }
@@ -319,10 +318,13 @@ impl<'a> Iterator for IniIter<'a> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(string, section)| (string, section.iter()))
+        self.iter
+            .next()
+            .map(|(string, section)| (string, section.iter()))
     }
 }
 
+#[doc(hidden)]
 pub struct IniIterMut<'a> {
     iter: hash_map::IterMut<'a, String, Section>,
 }
@@ -332,7 +334,9 @@ impl<'a> Iterator for IniIterMut<'a> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(string, section)| (string, section.iter_mut()))
+        self.iter
+            .next()
+            .map(|(string, section)| (string, section.iter_mut()))
     }
 }
 
@@ -365,7 +369,14 @@ mod library_test {
     fn test_string_vec() {
         let ini = Ini::from_string("[section]\nname=a, b, c");
         let name: Option<Vec<String>> = ini.get_vec("section", "name");
-        assert_eq!(name, Some(vec![String::from("a"), String::from("b"), String::from("c")]));
+        assert_eq!(
+            name,
+            Some(vec![
+                String::from("a"),
+                String::from("b"),
+                String::from("c"),
+            ])
+        );
     }
 
     #[test]
@@ -407,8 +418,18 @@ mod parser {
             }
         } else if content.contains('=') {
             let mut pair = content.splitn(2, '=').map(|s| s.trim());
-            let key = pair.next().unwrap().to_owned();
-            let value = pair.next().unwrap().to_owned();
+            // please rewrite this
+            let key = match pair.next() {
+                Some(value) => value.to_owned(),
+                None => return Parsed::Error("the key is None".to_owned()),
+            };
+            let value = match pair.next() {
+                Some(value) => value.to_owned(),
+                None => return Parsed::Error("the value is None".to_owned()),
+            };
+            if key.len() == 0 {
+                return Parsed::Error("the key is empty".to_owned());
+            }
             return Parsed::Value(key, value);
         }
         Parsed::Error("incorrect syntax".to_owned())
@@ -462,6 +483,14 @@ mod parser {
         #[test]
         fn test_incorrect_token() {
             match parse_line("[section = 1, 2 = value") {
+                Parsed::Error(_) => assert!(true),
+                _ => assert!(false),
+            }
+        }
+
+        #[test]
+        fn test_incorrect_key_value_line() {
+            match parse_line("= 3") {
                 Parsed::Error(_) => assert!(true),
                 _ => assert!(false),
             }
