@@ -404,7 +404,10 @@ mod parser {
     }
 
     pub fn parse_line(line: &str) -> Parsed {
-        let content = line.split(';').nth(0).unwrap().trim();
+        let content = match line.split(';').next() {
+            Some(value) => value.trim(),
+            None => return Parsed::Empty
+        };
         if content.len() == 0 {
             return Parsed::Empty;
         }
@@ -418,17 +421,18 @@ mod parser {
             }
         } else if content.contains('=') {
             let mut pair = content.splitn(2, '=').map(|s| s.trim());
-            // please rewrite this
+            // if key is None => error
             let key = match pair.next() {
                 Some(value) => value.to_owned(),
-                None => return Parsed::Error("the key is None".to_owned()),
+                None => return Parsed::Error("key is None".to_owned()),
             };
+            // if value is None => empty string
             let value = match pair.next() {
                 Some(value) => value.to_owned(),
-                None => return Parsed::Error("the value is None".to_owned()),
+                None => "".to_owned(),
             };
             if key.len() == 0 {
-                return Parsed::Error("the key is empty".to_owned());
+                return Parsed::Error("empty key".to_owned());
             }
             return Parsed::Value(key, value);
         }

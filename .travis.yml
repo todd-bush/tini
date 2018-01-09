@@ -1,11 +1,14 @@
-sudo: false
 language: rust
+rust:
+  - stable
+  - beta
+  - nightly
 script:
- - |
-    cargo test --verbose &&
-    cargo build --verbose &&
-    cargo doc
+  - cargo test --verbose --all
+  - cargo build --verbose --all
+  - cargo doc
 after_success: sh scripts/travis-doc-upload.sh
-cache:
- directories:
-  - $HOME/.cargo
+cache: cargo
+matrix:
+  allow_failures:
+    - rust: nightly
