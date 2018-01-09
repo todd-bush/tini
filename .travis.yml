@@ -6,8 +6,9 @@ rust:
 script:
   - cargo test --verbose --all
   - cargo build --verbose --all
-  - cargo doc
-after_success: sh scripts/travis-doc-upload.sh
+  - if [ "$TRAVIS_RUST_VERSION" == "stable" ]; then cargo doc; fi
+after_success:
+  - if [ "$TRAVIS_RUST_VERSION" == "stable" ]; then sh scripts/travis-doc-upload.sh; fi
 cache: cargo
 matrix:
   allow_failures:
