@@ -406,7 +406,7 @@ mod parser {
     pub fn parse_line(line: &str) -> Parsed {
         let content = match line.split(';').next() {
             Some(value) => value.trim(),
-            None => return Parsed::Empty
+            None => return Parsed::Empty,
         };
         if content.len() == 0 {
             return Parsed::Empty;

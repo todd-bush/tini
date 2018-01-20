@@ -13,7 +13,13 @@ exclude = ["scripts/", "examples/"]
 name = "tini"
 
 [[example]]
-name = "test"
+name = "read-write-test"
 
 [[example]]
-name = "read"
+name = "read-only"
+
+[[example]]
+name = "work-with-vector"
+
+[badges]
+travis-ci = { repository = "pinecrew/tini" }
