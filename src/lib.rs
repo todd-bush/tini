@@ -14,8 +14,7 @@
 //! # Examples
 //! ## Read from buffer and get string values
 //! ````
-//! use tini::Ini;
-//!
+//! # use tini::Ini;
 //! let conf = Ini::from_buffer(["[search]",
 //!                              "g = google.com",
 //!                              "dd = duckduckgo.com"].join("\n"));
@@ -28,8 +27,7 @@
 //! ````
 //! ## Construct in program and get vectors
 //! ````
-//! use tini::Ini;
-//!
+//! # use tini::Ini;
 //! let conf = Ini::new().section("floats")
 //!                      .item("consts", "3.1416, 2.7183")
 //!                      .section("integers")
@@ -91,9 +89,8 @@ impl Ini {
     /// You may use Path
     ///
     /// ```
-    /// use std::path::Path;
-    /// use tini::Ini;
-    ///
+    /// # use std::path::Path;
+    /// # use tini::Ini;
     /// let path = Path::new("./examples/example.ini");
     /// let conf = Ini::from_file(path);
     /// assert!(conf.ok().is_some());
@@ -102,8 +99,7 @@ impl Ini {
     /// or `&str`
     ///
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_file("./examples/example.ini");
     /// assert!(conf.ok().is_some());
     /// ```
@@ -118,8 +114,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// let value: Option<u8> = conf.get("section", "one");
     /// assert_eq!(value, Some(1));
@@ -132,8 +127,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::new().section("empty");
     /// assert_eq!(conf.to_buffer(), String::new());
     /// ```
@@ -145,8 +139,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::new().section("test")
     ///                      .item("value", "10");
     ///
@@ -174,8 +167,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// // you may use `conf.to_buffer()`
     /// let value: String = conf.to_buffer();
@@ -195,8 +187,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// let value: Option<u8> = conf.get("section", "one");
     /// assert_eq!(value, Some(1));
@@ -210,8 +201,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\nlist = 1, 2, 3, 4");
     /// let value: Option<Vec<u8>> = conf.get_vec("section", "list");
     /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
@@ -220,6 +210,7 @@ impl Ini {
     where
         T: FromStr,
     {
+        // TODO: написать нормальную нарезку с учётом кавычек
         self.get_raw(section, key).and_then(|x| {
             x.split(',')
                 .map(|s| s.trim().parse())
@@ -231,8 +222,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer(["[search]",
     ///                         "g = google.com",
     ///                         "dd = duckduckgo.com"].join("\n"));
@@ -250,8 +240,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::new().section("foo")
     ///                      .item("item", "value")
     ///                      .item("other", "something")
@@ -274,8 +263,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let mut conf = Ini::new().section("foo")
     ///                          .item("item", "value")
     ///                          .item("other", "something")
