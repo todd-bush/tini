@@ -40,24 +40,28 @@
 //! assert_eq!(consts, [3.1416, 2.7183]);
 //! assert_eq!(lost, [4, 8, 15, 16, 23, 42]);
 //! ````
-use std::path::Path;
-use std::collections::{hash_map, HashMap};
+use ordered_hashmap::OrderedHashMap;
+use parser::{parse_line, Parsed};
+use std::collections::hash_map;
+use std::fmt;
+use std::fs::File;
 use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::iter::Iterator;
-use std::fs::File;
+use std::path::Path;
 use std::str::FromStr;
-use parser::{parse_line, Parsed};
-use std::fmt;
 
-type Section = HashMap<String, String>;
-type IniParsed = HashMap<String, Section>;
-type SectionIter<'a> = hash_map::Iter<'a, String, String>;
-type SectionIterMut<'a> = hash_map::IterMut<'a, String, String>;
+mod ordered_hashmap;
+
+type Section = OrderedHashMap<String, String>;
+type IniParsed = OrderedHashMap<String, Section>;
+type SectionIter<'a> = ordered_hashmap::Iter<'a, String, String>;
+type SectionIterMut<'a> = ordered_hashmap::IterMut<'a, String, String>;
 
 /// Structure for INI-file data
 #[derive(Debug)]
 pub struct Ini {
-    #[doc(hidden)] data: IniParsed,
+    #[doc(hidden)]
+    data: IniParsed,
     last_section_name: String,
 }
 
@@ -312,7 +316,7 @@ impl fmt::Display for Ini {
 
 #[doc(hidden)]
 pub struct IniIter<'a> {
-    iter: hash_map::Iter<'a, String, Section>,
+    iter: ordered_hashmap::Iter<'a, String, Section>,
 }
 
 impl<'a> Iterator for IniIter<'a> {
@@ -328,7 +332,7 @@ impl<'a> Iterator for IniIter<'a> {
 
 #[doc(hidden)]
 pub struct IniIterMut<'a> {
-    iter: hash_map::IterMut<'a, String, Section>,
+    iter: ordered_hashmap::IterMut<'a, String, Section>,
 }
 
 impl<'a> Iterator for IniIterMut<'a> {
@@ -402,13 +406,13 @@ mod parser {
         Error(String),
         Empty,
         Section(String),
-        Value(String, String), /* Vector(String, Vec<String>), impossible, because HashMap field has type String, not Vec */
+        Value(String, String), /* Vector(String, Vec<String>), impossible, because OrderedHashMap field has type String, not Vec */
     }
 
     pub fn parse_line(line: &str) -> Parsed {
         let content = match line.split(';').next() {
             Some(value) => value.trim(),
-            None => return Parsed::Empty
+            None => return Parsed::Empty,
         };
         if content.len() == 0 {
             return Parsed::Empty;
