@@ -302,7 +302,7 @@ impl fmt::Display for Ini {
                 buffer.push_str(&format!("{} = {}\n", key, value));
             }
             // blank line between sections
-            buffer.push_str("\n")
+            buffer.push_str("\n");
         }
         // remove last '\n'
         buffer.pop();
