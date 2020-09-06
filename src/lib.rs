@@ -182,7 +182,7 @@ impl Ini {
     /// // or format!("{}", conf);
     /// // let value: String = format!("{}", conf);
     /// // but the result will be the same
-    /// assert_eq!(value, "[section]\none = 1".to_owned());
+    /// assert_eq!(value, "[section]\none = 1\n".to_owned());
     /// ```
     pub fn to_buffer(&self) -> String {
         format!("{}", self)
@@ -301,6 +301,8 @@ impl fmt::Display for Ini {
             for (key, value) in iter {
                 buffer.push_str(&format!("{} = {}\n", key, value));
             }
+            // blank line between sections
+            buffer.push_str("\n");
         }
         // remove last '\n'
         buffer.pop();
