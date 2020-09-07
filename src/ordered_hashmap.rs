@@ -1,10 +1,10 @@
 use std::borrow::Borrow;
-use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 use std::hash::Hash;
 use std::iter::IntoIterator;
 
-#[derive (Debug)]
+#[derive(Debug)]
 pub struct OrderedHashMap<K, V> {
     base: HashMap<K, V>,
     order: Vec<K>,
@@ -20,8 +20,9 @@ pub struct IterMut<'a, K, V> {
     order_iterator: std::slice::Iter<'a, K>,
 }
 
-impl<'a, K, V> IntoIterator for &'a OrderedHashMap<K, V> 
-    where K: Eq + Hash
+impl<'a, K, V> IntoIterator for &'a OrderedHashMap<K, V>
+where
+    K: Eq + Hash,
 {
     type Item = (&'a K, &'a V);
     type IntoIter = Iter<'a, K, V>;
@@ -34,8 +35,9 @@ impl<'a, K, V> IntoIterator for &'a OrderedHashMap<K, V>
     }
 }
 
-impl<'a, K, V> Iterator for Iter<'a, K, V> 
-    where K: Eq + Hash
+impl<'a, K, V> Iterator for Iter<'a, K, V>
+where
+    K: Eq + Hash,
 {
     type Item = (&'a K, &'a V);
     fn next(&mut self) -> Option<Self::Item> {
@@ -46,8 +48,9 @@ impl<'a, K, V> Iterator for Iter<'a, K, V>
     }
 }
 
-impl<'a, K, V> Iterator for IterMut<'a, K, V> 
-    where K: Eq + Hash
+impl<'a, K, V> Iterator for IterMut<'a, K, V>
+where
+    K: Eq + Hash,
 {
     type Item = (&'a K, &'a mut V);
     fn next(&mut self) -> Option<Self::Item> {
@@ -65,7 +68,7 @@ where
     pub fn new() -> OrderedHashMap<K, V> {
         OrderedHashMap {
             base: HashMap::<K, V>::new(),
-            order: Vec::<K>::new()
+            order: Vec::<K>::new(),
         }
     }
     pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
@@ -87,7 +90,7 @@ where
     }
     pub fn iter_mut(&mut self) -> IterMut<'_, K, V> {
         IterMut {
-            base: & mut self.base,
+            base: &mut self.base,
             order_iterator: self.order.iter(),
         }
     }
