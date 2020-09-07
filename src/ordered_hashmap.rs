@@ -95,7 +95,7 @@ where
         }
     }
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
+        self.order.push(key.clone());
         self.base.entry(key)
     }
 }
-
