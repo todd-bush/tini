@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::collections::hash_map::Entry;
+use std::collections::hash_map::{self, Entry};
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::iter::IntoIterator;
@@ -12,11 +12,6 @@ pub struct OrderedHashMap<K, V> {
 
 pub struct Iter<'a, K, V> {
     base: &'a HashMap<K, V>,
-    order_iterator: std::slice::Iter<'a, K>,
-}
-
-pub struct IterMut<'a, K, V> {
-    base: &'a mut HashMap<K, V>,
     order_iterator: std::slice::Iter<'a, K>,
 }
 
@@ -43,19 +38,6 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         match self.order_iterator.next() {
             Some(k) => self.base.get_key_value(&k),
-            None => None,
-        }
-    }
-}
-
-impl<'a, K, V> Iterator for IterMut<'a, K, V>
-where
-    K: Eq + Hash,
-{
-    type Item = (&'a K, &'a mut V);
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.order_iterator.next() {
-            Some(ref k) => Some((&k, self.base.get_mut(&k).unwrap())),
             None => None,
         }
     }
@@ -88,11 +70,8 @@ where
             order_iterator: self.order.iter(),
         }
     }
-    pub fn iter_mut(&mut self) -> IterMut<'_, K, V> {
-        IterMut {
-            base: &mut self.base,
-            order_iterator: self.order.iter(),
-        }
+    pub fn iter_mut(&mut self) -> hash_map::IterMut<'_, K, V> {
+        self.base.iter_mut()
     }
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
         self.order.push(key.clone());

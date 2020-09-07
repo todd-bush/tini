@@ -55,7 +55,7 @@ mod ordered_hashmap;
 type Section = OrderedHashMap<String, String>;
 type IniParsed = OrderedHashMap<String, Section>;
 type SectionIter<'a> = ordered_hashmap::Iter<'a, String, String>;
-type SectionIterMut<'a> = ordered_hashmap::IterMut<'a, String, String>;
+type SectionIterMut<'a> = hash_map::IterMut<'a, String, String>;
 
 /// Structure for INI-file data
 #[derive(Debug)]
@@ -332,7 +332,7 @@ impl<'a> Iterator for IniIter<'a> {
 
 #[doc(hidden)]
 pub struct IniIterMut<'a> {
-    iter: ordered_hashmap::IterMut<'a, String, Section>,
+    iter: hash_map::IterMut<'a, String, Section>,
 }
 
 impl<'a> Iterator for IniIterMut<'a> {
@@ -351,28 +351,28 @@ mod library_test {
     use super::*;
 
     #[test]
-    fn test_bool() {
+    fn bool() {
         let ini = Ini::from_buffer("[string]\nabc = true");
         let abc: Option<bool> = ini.get("string", "abc");
         assert_eq!(abc, Some(true));
     }
 
     #[test]
-    fn test_float() {
+    fn float() {
         let ini = Ini::from_string("[section]\nname=10.5");
         let name: Option<f64> = ini.get("section", "name");
         assert_eq!(name, Some(10.5));
     }
 
     #[test]
-    fn test_float_vec() {
+    fn float_vec() {
         let ini = Ini::from_string("[section]\nname=1.2, 3.4, 5.6");
         let name: Option<Vec<f64>> = ini.get_vec("section", "name");
         assert_eq!(name, Some(vec![1.2, 3.4, 5.6]));
     }
 
     #[test]
-    fn test_string_vec() {
+    fn string_vec() {
         let ini = Ini::from_string("[section]\nname=a, b, c");
         let name: Option<Vec<String>> = ini.get_vec("section", "name");
         assert_eq!(
@@ -386,17 +386,30 @@ mod library_test {
     }
 
     #[test]
-    fn test_parse_error() {
+    fn parse_error() {
         let ini = Ini::from_string("[section]\nlist = 1, 2, --, 4");
         let name: Option<Vec<u8>> = ini.get_vec("section", "list");
         assert_eq!(name, None);
     }
 
     #[test]
-    fn test_get_or_macro() {
+    fn get_or_macro() {
         let ini = Ini::from_string("[section]\nlist = 1, 2, --, 4");
         let with_value: Vec<u8> = ini.get_vec("section", "list").unwrap_or(vec![1, 2, 3, 4]);
         assert_eq!(with_value, vec![1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn ordering() {
+        let ini = Ini::from_string("[a]\nc = 1\nb = 2\na = 3");
+        let keys: Vec<String> = ini
+            .data
+            .get("a")
+            .unwrap()
+            .iter()
+            .map(|(k, _)| k.clone())
+            .collect();
+        assert_eq!(["c", "b", "a"], keys[..]);
     }
 }
 
