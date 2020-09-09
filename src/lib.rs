@@ -42,7 +42,6 @@
 //! ````
 use ordered_hashmap::OrderedHashMap;
 use parser::{parse_line, Parsed};
-use std::collections::hash_map;
 use std::fmt;
 use std::fs::File;
 use std::io::{self, BufReader, BufWriter, Read, Write};
@@ -55,7 +54,7 @@ mod ordered_hashmap;
 type Section = OrderedHashMap<String, String>;
 type IniParsed = OrderedHashMap<String, Section>;
 type SectionIter<'a> = ordered_hashmap::Iter<'a, String, String>;
-type SectionIterMut<'a> = hash_map::IterMut<'a, String, String>;
+type SectionIterMut<'a> = ordered_hashmap::IterMut<'a, String, String>;
 
 /// Structure for INI-file data
 #[derive(Debug)]
@@ -250,7 +249,7 @@ impl Ini {
     }
     /// Iterate over all sections, yielding pairs of section name and iterator
     /// over the section elements. The concrete iterator element type is
-    /// `(&'a String, std::collections::hash_map::Iter<'a, String, String>)`.
+    /// `(&'a String, ordered_hashmap::Iter<'a, String, String>)`.
     ///
     /// # Example
     /// ```
@@ -274,7 +273,7 @@ impl Ini {
 
     /// Iterate over all sections, yielding pairs of section name and mutable
     /// iterator over the section elements. The concrete iterator element type is
-    /// `(&'a String, std::collections::hash_map::IterMut<'a, String, String>)`.
+    /// `(&'a String, ordered_hashmap::IterMut<'a, String, String>)`.
     ///
     /// # Example
     /// ```
@@ -332,7 +331,7 @@ impl<'a> Iterator for IniIter<'a> {
 
 #[doc(hidden)]
 pub struct IniIterMut<'a> {
-    iter: hash_map::IterMut<'a, String, Section>,
+    iter: ordered_hashmap::IterMut<'a, String, Section>,
 }
 
 impl<'a> Iterator for IniIterMut<'a> {

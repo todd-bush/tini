@@ -15,6 +15,8 @@ pub struct Iter<'a, K, V> {
     order_iterator: std::slice::Iter<'a, K>,
 }
 
+pub type IterMut<'a, K, V> = hash_map::IterMut<'a, K, V>;
+
 impl<'a, K, V> IntoIterator for &'a OrderedHashMap<K, V>
 where
     K: Eq + Hash,
