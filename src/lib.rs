@@ -177,7 +177,7 @@ impl Ini {
     /// // or format!("{}", conf);
     /// // let value: String = format!("{}", conf);
     /// // but the result will be the same
-    /// assert_eq!(value, "[section]\none = 1\n".to_owned());
+    /// assert_eq!(value, "[section]\none = 1".to_owned());
     /// ```
     pub fn to_buffer(&self) -> String {
         format!("{}", self)
@@ -213,7 +213,7 @@ impl Ini {
     where
         T: FromStr,
     {
-        // TODO: написать нормальную нарезку с учётом кавычек
+        // TODO: write a normal splitter taking into account quotes
         self.get_raw(section, key).and_then(|x| {
             x.split(',')
                 .map(|s| s.trim().parse())
@@ -295,8 +295,8 @@ impl fmt::Display for Ini {
             // blank line between sections
             buffer.push_str("\n");
         }
-        // remove last '\n'
-        buffer.pop();
+        // remove last two '\n'
+        buffer.pop(); buffer.pop();
         write!(f, "{}", buffer)
     }
 }
@@ -397,6 +397,31 @@ mod library_test {
             .map(|(k, _)| k.clone())
             .collect();
         assert_eq!(["c", "b", "a"], keys[..]);
+    }
+
+    #[test]
+    fn mutating() {
+        let mut config = Ini::new()
+                     .section("items")
+                     .item("a", "1")
+                     .item("b", "2")
+                     .item("c", "3");
+
+        // mutate items
+        for (_, item) in config.iter_mut() {
+            for (_, value) in item {
+                let v: i32 = value.parse().unwrap();
+                *value = format!("{}", v + 1);
+            }
+        }
+
+        let a_val: String = config.get("items", "a").unwrap();
+        let b_val: String = config.get("items", "b").unwrap();
+        let c_val: String = config.get("items", "c").unwrap();
+
+        assert_eq!(a_val, "2".to_owned());
+        assert_eq!(b_val, "3".to_owned());
+        assert_eq!(c_val, "4".to_owned());
     }
 }
 

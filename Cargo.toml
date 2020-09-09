@@ -8,18 +8,11 @@ repository = "https://github.com/pinecrew/tini"
 keywords = ["ini", "configuration", "conf", "cfg"]
 license = "BSD-3-Clause"
 exclude = ["scripts/", "examples/"]
+autoexamples = true
+edition = "2018"
 
 [lib]
 name = "tini"
-
-[[example]]
-name = "read-write-test"
-
-[[example]]
-name = "read-only"
-
-[[example]]
-name = "work-with-vector"
 
 [badges]
 travis-ci = { repository = "pinecrew/tini" }

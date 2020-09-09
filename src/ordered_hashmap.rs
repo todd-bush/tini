@@ -75,8 +75,15 @@ where
     pub fn iter_mut(&mut self) -> hash_map::IterMut<'_, K, V> {
         self.base.iter_mut()
     }
+    // TODO: write custom entry
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
-        self.order.push(key.clone());
-        self.base.entry(key)
+        match self.base.entry(key.clone()) {
+            e @ hash_map::Entry::Occupied(_) => e,
+            // hack
+            v @ hash_map::Entry::Vacant(_) => {
+                self.order.push(key.clone());
+                v
+            }
+        }
     }
 }
