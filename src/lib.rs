@@ -70,6 +70,7 @@ impl Ini {
             last_section_name: String::new(),
         }
     }
+
     fn from_string(string: &str) -> Ini {
         let mut result = Ini::new();
         for (i, line) in string.lines().enumerate() {
@@ -82,6 +83,7 @@ impl Ini {
         }
         result
     }
+
     /// Construct Ini from file
     ///
     /// # Errors
@@ -113,6 +115,7 @@ impl Ini {
         reader.read_to_string(&mut buffer)?;
         Ok(Ini::from_string(&buffer))
     }
+
     /// Construct Ini from buffer
     ///
     /// # Example
@@ -125,6 +128,7 @@ impl Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
+
     /// Set section name for following [`item()`](#method.item)s. This function doesn't create a
     /// section.
     ///
@@ -138,6 +142,7 @@ impl Ini {
         self.last_section_name = name.into();
         self
     }
+
     /// Add key-value pair to last section
     ///
     /// # Example
@@ -156,6 +161,7 @@ impl Ini {
             .insert(name.into(), value.into());
         self
     }
+
     /// Write Ini to file. This function is similar to `from_file` in use.
     /// # Errors
     /// Errors returned by `File::create()` and `BufWriter::write_all()`
@@ -166,6 +172,7 @@ impl Ini {
         writer.write_all(self.to_buffer().as_bytes())?;
         Ok(())
     }
+
     /// Write Ini to buffer
     ///
     /// # Example
@@ -177,7 +184,7 @@ impl Ini {
     /// // or format!("{}", conf);
     /// // let value: String = format!("{}", conf);
     /// // but the result will be the same
-    /// assert_eq!(value, "[section]\none = 1".to_owned());
+    /// assert_eq!(value, "[section]\none = 1");
     /// ```
     pub fn to_buffer(&self) -> String {
         format!("{}", self)
@@ -186,6 +193,7 @@ impl Ini {
     fn get_raw(&self, section: &str, key: &str) -> Option<&String> {
         self.data.get(section).and_then(|x| x.get(key))
     }
+
     /// Get scalar value of key in section
     ///
     /// # Example
@@ -198,6 +206,7 @@ impl Ini {
     pub fn get<T: FromStr>(&self, section: &str, key: &str) -> Option<T> {
         self.get_raw(section, key).and_then(|x| x.parse().ok())
     }
+
     /// Get vector value of key in section
     ///
     /// The function returns `None` if one of the elements can not be parsed.
@@ -221,6 +230,7 @@ impl Ini {
                 .ok()
         })
     }
+
     /// Iterate over a section by a name
     ///
     /// # Example
@@ -237,6 +247,7 @@ impl Ini {
     pub fn iter_section(&self, section: &str) -> Option<SectionIter> {
         self.data.get(section).map(|value| value.iter())
     }
+
     /// Iterate over all sections, yielding pairs of section name and iterator
     /// over the section elements. The concrete iterator element type is
     /// `(&'a String, ordered_hashmap::Iter<'a, String, String>)`.
