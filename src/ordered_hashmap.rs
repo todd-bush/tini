@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::collections::hash_map::{self, Entry, Keys, Values};
+use std::collections::hash_map::{self, Entry};
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::iter::IntoIterator;
@@ -63,7 +63,7 @@ where
         self.base.get(k)
     }
     pub fn insert(&mut self, k: K, v: V) -> Option<V> {
-        if (!self.base.contains_key(&k)) {
+        if !self.base.contains_key(&k) {
             self.order.push(k.clone());
         }
         self.base.insert(k, v)
@@ -80,15 +80,10 @@ where
     pub fn keys(&self) -> std::slice::Iter<K> {
         self.order.iter()
     }
-    // TODO: write custom entry
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
-        match self.base.entry(key.clone()) {
-            e @ hash_map::Entry::Occupied(_) => e,
-            // hack
-            v @ hash_map::Entry::Vacant(_) => {
-                self.order.push(key.clone());
-                v
-            }
+        if !self.base.contains_key(&key) {
+            self.order.push(key.clone());
         }
+        self.base.entry(key.clone())
     }
 }

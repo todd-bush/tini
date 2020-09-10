@@ -360,6 +360,13 @@ mod library_test {
     }
 
     #[test]
+    fn bad_cast() {
+        let ini = Ini::new().section("one").item("a", "3.14");
+        let a: Option<u32> = ini.get("one", "a");
+        assert_eq!(a, None);
+    }
+
+    #[test]
     fn string_vec() {
         let ini = Ini::from_string("[section]\nname=a, b, c");
         let name: Option<Vec<String>> = ini.get_vec("section", "name");
@@ -416,13 +423,43 @@ mod library_test {
             }
         }
 
-        let a_val: String = config.get("items", "a").unwrap();
-        let b_val: String = config.get("items", "b").unwrap();
-        let c_val: String = config.get("items", "c").unwrap();
+        let a_val: Option<u8> = config.get("items", "a");
+        let b_val: Option<u8> = config.get("items", "b");
+        let c_val: Option<u8> = config.get("items", "c");
 
-        assert_eq!(a_val, "2".to_owned());
-        assert_eq!(b_val, "3".to_owned());
-        assert_eq!(c_val, "4".to_owned());
+        assert_eq!(a_val, Some(2));
+        assert_eq!(b_val, Some(3));
+        assert_eq!(c_val, Some(4));
+    }
+
+    #[test]
+    fn redefine_item() {
+        let config = Ini::new()
+            .section("items")
+            .item("one", "3")
+            .item("two", "2")
+            .item("one", "1");
+
+        let one: Option<i32> = config.get("items", "one");
+
+        assert_eq!(one, Some(1));
+    }
+
+    #[test]
+    fn redefine_section() {
+        let config = Ini::new()
+            .section("one")
+            .item("a", "1")
+            .section("two")
+            .item("b", "2")
+            .section("one")
+            .item("c", "3");
+
+        let a_val: Option<i32> = config.get("one", "a");
+        let c_val: Option<i32> = config.get("one", "c");
+
+        assert_eq!(a_val, Some(1));
+        assert_eq!(c_val, Some(3));
     }
 }
 
