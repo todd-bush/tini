@@ -296,7 +296,8 @@ impl fmt::Display for Ini {
             buffer.push_str("\n");
         }
         // remove last two '\n'
-        buffer.pop(); buffer.pop();
+        buffer.pop();
+        buffer.pop();
         write!(f, "{}", buffer)
     }
 }
@@ -402,10 +403,10 @@ mod library_test {
     #[test]
     fn mutating() {
         let mut config = Ini::new()
-                     .section("items")
-                     .item("a", "1")
-                     .item("b", "2")
-                     .item("c", "3");
+            .section("items")
+            .item("a", "1")
+            .item("b", "2")
+            .item("c", "3");
 
         // mutate items
         for (_, item) in config.iter_mut() {
