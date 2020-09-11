@@ -157,7 +157,7 @@ impl Ini {
     pub fn item<S: Into<String>>(mut self, name: S, value: S) -> Self {
         self.data
             .entry(self.last_section_name.clone())
-            .or_insert(Section::new())
+            .or_insert_with(Section::new)
             .insert(name.into(), value.into());
         self
     }
@@ -310,6 +310,12 @@ impl fmt::Display for Ini {
         buffer.pop();
         buffer.pop();
         write!(f, "{}", buffer)
+    }
+}
+
+impl Default for Ini {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -489,7 +495,7 @@ mod parser {
             Some(value) => value.trim(),
             None => return Parsed::Empty,
         };
-        if content.len() == 0 {
+        if content.is_empty() {
             return Parsed::Empty;
         }
         // add checks for content
@@ -512,7 +518,7 @@ mod parser {
                 Some(value) => value.to_owned(),
                 None => "".to_owned(),
             };
-            if key.len() == 0 {
+            if key.is_empty() {
                 return Parsed::Error("empty key".to_owned());
             }
             return Parsed::Value(key, value);
