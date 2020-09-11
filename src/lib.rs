@@ -406,15 +406,16 @@ mod library_test {
     }
 
     #[test]
-    fn ordering() {
+    fn ordering_iter() {
         let ini = Ini::from_string("[a]\nc = 1\nb = 2\na = 3");
-        let keys: Vec<String> = ini
-            .data
-            .get("a")
-            .unwrap()
-            .iter()
-            .map(|(k, _)| k.clone())
-            .collect();
+        let keys: Vec<&String> = ini.data.get("a").unwrap().iter().map(|(k, _)| k).collect();
+        assert_eq!(["c", "b", "a"], keys[..]);
+    }
+
+    #[test]
+    fn ordering_keys() {
+        let ini = Ini::from_string("[a]\nc = 1\nb = 2\na = 3");
+        let keys: Vec<&String> = ini.data.get("a").unwrap().keys().collect();
         assert_eq!(["c", "b", "a"], keys[..]);
     }
 
