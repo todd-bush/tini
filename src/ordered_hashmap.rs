@@ -45,6 +45,15 @@ where
     }
 }
 
+impl<K, V> Default for OrderedHashMap<K, V>
+where
+    K: Eq + Hash + Clone,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<K, V> OrderedHashMap<K, V>
 where
     K: Eq + Hash + Clone,
@@ -84,6 +93,6 @@ where
         if !self.base.contains_key(&key) {
             self.order.push(key.clone());
         }
-        self.base.entry(key.clone())
+        self.base.entry(key)
     }
 }
