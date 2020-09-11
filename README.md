@@ -4,15 +4,14 @@
 [![Build Status](https://travis-ci.org/pinecrew/tini.svg?branch=master)](https://travis-ci.org/pinecrew/tini)
 [![Crates](https://img.shields.io/crates/v/tini.svg)](https://crates.io/crates/tini)
 
-| [Documentation](http://pinecrew.github.io/tini/tini/) |
-[Examples](./examples) |
+| [Documentation](http://pinecrew.github.io/tini/tini/) | [Examples](./examples) |
 
 ## Usage
 
 Add `tini` to your `Cargo.toml`, for example:
 ```toml
 [dependencies]
-tini = "0.2"
+tini = "0.3"
 ```
 
 ## How to use
@@ -58,10 +57,6 @@ fn main() {
     conf.to_file("output.ini").unwrap();
     // Now `output.ini` contains
     // -----------------------------
-    // [params]
-    // pi = 3.14
-    // lost = 4, 8, 15, 16, 23, 42
-    // 
     // [params]
     // pi = 3.14
     // lost = 4, 8, 15, 16, 23, 42
