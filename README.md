@@ -31,10 +31,10 @@ fn main() {
     // Read list of values
     let frst4: Vec<bool> = config.get_vec("section_three", "frst4").unwrap();
     println!("name3 = {}", name3);
-    println!("frst4 = {}", frst4);
+    println!("frst4 = {:?}", frst4);
     // Result:
     // name3 = example text
-    // frst4 = true, false, true
+    // frst4 = [true, false, true]
 }
 ```
 
@@ -58,11 +58,17 @@ fn main() {
     conf.to_file("output.ini").unwrap();
     // Now `output.ini` contains
     // -----------------------------
-    // [other]
-    // default = hello world!
     // [params]
     // pi = 3.14
     // lost = 4, 8, 15, 16, 23, 42
+    // 
+    // [params]
+    // pi = 3.14
+    // lost = 4, 8, 15, 16, 23, 42
+    // 
+    // [other]
+    // default = hello world!
+    //
     // -----------------------------
 }
 ```

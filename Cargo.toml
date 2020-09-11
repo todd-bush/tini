@@ -1,19 +1,18 @@
 [package]
 name = "tini"
 description = "A tiny ini parsing library, written in Rust"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Alexey Golubev <dr.freecx@gmail.com>", "Vova Abdrakhmanov <369565@gmail.com>"]
 documentation = "http://pinecrew.github.io/tini/tini/"
 repository = "https://github.com/pinecrew/tini"
 keywords = ["ini", "configuration", "conf", "cfg"]
 license = "BSD-3-Clause"
 exclude = ["scripts/", "examples/"]
+autoexamples = true
+edition = "2018"
 
 [lib]
 name = "tini"
 
-[[example]]
-name = "test"
-
-[[example]]
-name = "read"
+[badges]
+travis-ci = { repository = "pinecrew/tini" }

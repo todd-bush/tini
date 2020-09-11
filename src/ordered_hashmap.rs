@@ -45,6 +45,15 @@ where
     }
 }
 
+impl<K, V> Default for OrderedHashMap<K, V>
+where
+    K: Eq + Hash + Clone,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<K, V> OrderedHashMap<K, V>
 where
     K: Eq + Hash + Clone,
@@ -63,7 +72,9 @@ where
         self.base.get(k)
     }
     pub fn insert(&mut self, k: K, v: V) -> Option<V> {
-        self.order.push(k.clone());
+        if !self.base.contains_key(&k) {
+            self.order.push(k.clone());
+        }
         self.base.insert(k, v)
     }
     pub fn iter(&self) -> Iter<'_, K, V> {
@@ -72,11 +83,16 @@ where
             order_iterator: self.order.iter(),
         }
     }
-    pub fn iter_mut(&mut self) -> hash_map::IterMut<'_, K, V> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, K, V> {
         self.base.iter_mut()
     }
+    pub fn keys(&self) -> std::slice::Iter<K> {
+        self.order.iter()
+    }
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
-        self.order.push(key.clone());
+        if !self.base.contains_key(&key) {
+            self.order.push(key.clone());
+        }
         self.base.entry(key)
     }
 }

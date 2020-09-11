@@ -14,8 +14,7 @@
 //! # Examples
 //! ## Read from buffer and get string values
 //! ````
-//! use tini::Ini;
-//!
+//! # use tini::Ini;
 //! let conf = Ini::from_buffer(["[search]",
 //!                              "g = google.com",
 //!                              "dd = duckduckgo.com"].join("\n"));
@@ -28,8 +27,7 @@
 //! ````
 //! ## Construct in program and get vectors
 //! ````
-//! use tini::Ini;
-//!
+//! # use tini::Ini;
 //! let conf = Ini::new().section("floats")
 //!                      .item("consts", "3.1416, 2.7183")
 //!                      .section("integers")
@@ -72,6 +70,7 @@ impl Ini {
             last_section_name: String::new(),
         }
     }
+
     fn from_string(string: &str) -> Ini {
         let mut result = Ini::new();
         for (i, line) in string.lines().enumerate() {
@@ -84,6 +83,7 @@ impl Ini {
         }
         result
     }
+
     /// Construct Ini from file
     ///
     /// # Errors
@@ -94,9 +94,8 @@ impl Ini {
     /// You may use Path
     ///
     /// ```
-    /// use std::path::Path;
-    /// use tini::Ini;
-    ///
+    /// # use std::path::Path;
+    /// # use tini::Ini;
     /// let path = Path::new("./examples/example.ini");
     /// let conf = Ini::from_file(path);
     /// assert!(conf.ok().is_some());
@@ -105,8 +104,7 @@ impl Ini {
     /// or `&str`
     ///
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_file("./examples/example.ini");
     /// assert!(conf.ok().is_some());
     /// ```
@@ -117,12 +115,12 @@ impl Ini {
         reader.read_to_string(&mut buffer)?;
         Ok(Ini::from_string(&buffer))
     }
+
     /// Construct Ini from buffer
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// let value: Option<u8> = conf.get("section", "one");
     /// assert_eq!(value, Some(1));
@@ -130,13 +128,13 @@ impl Ini {
     pub fn from_buffer<S: Into<String>>(buf: S) -> Ini {
         Ini::from_string(&buf.into())
     }
+
     /// Set section name for following [`item()`](#method.item)s. This function doesn't create a
     /// section.
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::new().section("empty");
     /// assert_eq!(conf.to_buffer(), String::new());
     /// ```
@@ -144,12 +142,12 @@ impl Ini {
         self.last_section_name = name.into();
         self
     }
+
     /// Add key-value pair to last section
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::new().section("test")
     ///                      .item("value", "10");
     ///
@@ -159,10 +157,11 @@ impl Ini {
     pub fn item<S: Into<String>>(mut self, name: S, value: S) -> Self {
         self.data
             .entry(self.last_section_name.clone())
-            .or_insert(Section::new())
+            .or_insert_with(Section::new)
             .insert(name.into(), value.into());
         self
     }
+
     /// Write Ini to file. This function is similar to `from_file` in use.
     /// # Errors
     /// Errors returned by `File::create()` and `BufWriter::write_all()`
@@ -173,19 +172,19 @@ impl Ini {
         writer.write_all(self.to_buffer().as_bytes())?;
         Ok(())
     }
+
     /// Write Ini to buffer
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// // you may use `conf.to_buffer()`
     /// let value: String = conf.to_buffer();
     /// // or format!("{}", conf);
     /// // let value: String = format!("{}", conf);
     /// // but the result will be the same
-    /// assert_eq!(value, "[section]\none = 1\n".to_owned());
+    /// assert_eq!(value, "[section]\none = 1");
     /// ```
     pub fn to_buffer(&self) -> String {
         format!("{}", self)
@@ -194,12 +193,12 @@ impl Ini {
     fn get_raw(&self, section: &str, key: &str) -> Option<&String> {
         self.data.get(section).and_then(|x| x.get(key))
     }
+
     /// Get scalar value of key in section
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\none = 1");
     /// let value: Option<u8> = conf.get("section", "one");
     /// assert_eq!(value, Some(1));
@@ -207,14 +206,14 @@ impl Ini {
     pub fn get<T: FromStr>(&self, section: &str, key: &str) -> Option<T> {
         self.get_raw(section, key).and_then(|x| x.parse().ok())
     }
+
     /// Get vector value of key in section
     ///
     /// The function returns `None` if one of the elements can not be parsed.
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer("[section]\nlist = 1, 2, 3, 4");
     /// let value: Option<Vec<u8>> = conf.get_vec("section", "list");
     /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
@@ -223,6 +222,7 @@ impl Ini {
     where
         T: FromStr,
     {
+        // TODO: write a normal splitter taking into account quotes
         self.get_raw(section, key).and_then(|x| {
             x.split(',')
                 .map(|s| s.trim().parse())
@@ -230,12 +230,12 @@ impl Ini {
                 .ok()
         })
     }
+
     /// Iterate over a section by a name
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::from_buffer(["[search]",
     ///                         "g = google.com",
     ///                         "dd = duckduckgo.com"].join("\n"));
@@ -247,14 +247,14 @@ impl Ini {
     pub fn iter_section(&self, section: &str) -> Option<SectionIter> {
         self.data.get(section).map(|value| value.iter())
     }
+
     /// Iterate over all sections, yielding pairs of section name and iterator
     /// over the section elements. The concrete iterator element type is
     /// `(&'a String, ordered_hashmap::Iter<'a, String, String>)`.
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let conf = Ini::new().section("foo")
     ///                      .item("item", "value")
     ///                      .item("other", "something")
@@ -277,8 +277,7 @@ impl Ini {
     ///
     /// # Example
     /// ```
-    /// use tini::Ini;
-    ///
+    /// # use tini::Ini;
     /// let mut conf = Ini::new().section("foo")
     ///                          .item("item", "value")
     ///                          .item("other", "something")
@@ -307,9 +306,16 @@ impl fmt::Display for Ini {
             // blank line between sections
             buffer.push_str("\n");
         }
-        // remove last '\n'
+        // remove last two '\n'
+        buffer.pop();
         buffer.pop();
         write!(f, "{}", buffer)
+    }
+}
+
+impl Default for Ini {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -371,6 +377,13 @@ mod library_test {
     }
 
     #[test]
+    fn bad_cast() {
+        let ini = Ini::new().section("one").item("a", "3.14");
+        let a: Option<u32> = ini.get("one", "a");
+        assert_eq!(a, None);
+    }
+
+    #[test]
     fn string_vec() {
         let ini = Ini::from_string("[section]\nname=a, b, c");
         let name: Option<Vec<String>> = ini.get_vec("section", "name");
@@ -399,16 +412,72 @@ mod library_test {
     }
 
     #[test]
-    fn ordering() {
+    fn ordering_iter() {
         let ini = Ini::from_string("[a]\nc = 1\nb = 2\na = 3");
-        let keys: Vec<String> = ini
-            .data
-            .get("a")
-            .unwrap()
-            .iter()
-            .map(|(k, _)| k.clone())
-            .collect();
+        let keys: Vec<&String> = ini.data.get("a").unwrap().iter().map(|(k, _)| k).collect();
         assert_eq!(["c", "b", "a"], keys[..]);
+    }
+
+    #[test]
+    fn ordering_keys() {
+        let ini = Ini::from_string("[a]\nc = 1\nb = 2\na = 3");
+        let keys: Vec<&String> = ini.data.get("a").unwrap().keys().collect();
+        assert_eq!(["c", "b", "a"], keys[..]);
+    }
+
+    #[test]
+    fn mutating() {
+        let mut config = Ini::new()
+            .section("items")
+            .item("a", "1")
+            .item("b", "2")
+            .item("c", "3");
+
+        // mutate items
+        for (_, item) in config.iter_mut() {
+            for (_, value) in item {
+                let v: i32 = value.parse().unwrap();
+                *value = format!("{}", v + 1);
+            }
+        }
+
+        let a_val: Option<u8> = config.get("items", "a");
+        let b_val: Option<u8> = config.get("items", "b");
+        let c_val: Option<u8> = config.get("items", "c");
+
+        assert_eq!(a_val, Some(2));
+        assert_eq!(b_val, Some(3));
+        assert_eq!(c_val, Some(4));
+    }
+
+    #[test]
+    fn redefine_item() {
+        let config = Ini::new()
+            .section("items")
+            .item("one", "3")
+            .item("two", "2")
+            .item("one", "1");
+
+        let one: Option<i32> = config.get("items", "one");
+
+        assert_eq!(one, Some(1));
+    }
+
+    #[test]
+    fn redefine_section() {
+        let config = Ini::new()
+            .section("one")
+            .item("a", "1")
+            .section("two")
+            .item("b", "2")
+            .section("one")
+            .item("c", "3");
+
+        let a_val: Option<i32> = config.get("one", "a");
+        let c_val: Option<i32> = config.get("one", "c");
+
+        assert_eq!(a_val, Some(1));
+        assert_eq!(c_val, Some(3));
     }
 }
 
@@ -426,7 +495,7 @@ mod parser {
             Some(value) => value.trim(),
             None => return Parsed::Empty,
         };
-        if content.len() == 0 {
+        if content.is_empty() {
             return Parsed::Empty;
         }
         // add checks for content
@@ -449,7 +518,7 @@ mod parser {
                 Some(value) => value.to_owned(),
                 None => "".to_owned(),
             };
-            if key.len() == 0 {
+            if key.is_empty() {
                 return Parsed::Error("empty key".to_owned());
             }
             return Parsed::Value(key, value);
