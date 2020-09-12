@@ -56,21 +56,21 @@ mod tests {
 
     #[test]
     fn escaped() {
-        let s = "1,2,3\\,4,5,6";
+        let s = r"1,2,3\,4,5,6";
         let items: Vec<_> = Tokenizer::new(s).collect();
-        assert_eq!(items, ["1", "2", "3\\,4", "5", "6"]);
+        assert_eq!(items, ["1", "2", r"3\,4", "5", "6"]);
     }
 
     #[test]
     fn last_quoted() {
-        let s = "1,2,3\\,";
+        let s = r"1,2,3\,";
         let items: Vec<_> = Tokenizer::new(s).collect();
-        assert_eq!(items, ["1", "2", "3\\,"]);
+        assert_eq!(items, ["1", "2", r"3\,"]);
     }
 
     #[test]
     fn one_escaped_item() {
-        let s = "\\,\\,\\,";
+        let s = r"\,\,\,";
         let items: Vec<_> = Tokenizer::new(s).collect();
         assert_eq!(items, [s]);
     }
@@ -84,9 +84,9 @@ mod tests {
 
     #[test]
     fn empty_and_escape() {
-        let s = "1,\\,,2,3";
+        let s = r"1,\,,2,3";
         let items: Vec<_> = Tokenizer::new(s).collect();
-        assert_eq!(items, ["1", "\\,", "2", "3"]);
+        assert_eq!(items, ["1", r"\,", "2", "3"]);
     }
 
     #[test]

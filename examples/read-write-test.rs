@@ -14,9 +14,9 @@ fn main() {
 
     // read vector from ini
     let n2: Vec<bool> = config
-        .get_vec("section_three", "frst4")
+        .get_vec("section_three", "frst5")
         .unwrap_or(vec![false]);
-    println!(">> entry `frst4` from `section_three` = {:?}", n2);
+    println!(">> entry `frst5` from `section_three` = {:?}", n2);
 
     // create Ini struture
     let test = Ini::new()

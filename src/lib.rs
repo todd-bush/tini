@@ -165,6 +165,40 @@ impl Ini {
         self
     }
 
+    /// Add key-vector pair to last section
+    ///
+    /// # Example
+    /// ```
+    /// # use tini::Ini;
+    /// let conf = Ini::new()
+    ///     .section("default")
+    ///     .item_vec("a", &[1, 2, 3, 4])
+    ///     .item_vec("b", &vec!["a", "b", "c"]);
+    /// let va: Option<Vec<u8>> = conf.get_vec("default", "a");
+    /// let vb: Vec<String> = conf.get_vec("default", "b").unwrap();
+    /// assert_eq!(va, Some(vec![1, 2, 3, 4]));
+    /// assert_eq!(vb, ["a", "b", "c"]);
+    /// ```
+    // TODO: optimize
+    pub fn item_vec<S, V>(mut self, name: S, vector: &[V]) -> Self
+    where
+        S: Into<String>,
+        V: fmt::Display,
+    {
+        let vector_data = vector
+            .iter()
+            .map(|s| format!("{}", s).replace(r"\", r"\ ").replace(",", r"\,"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        // TODO: use this instead current code
+        // self.item(name, vector_data)
+        self.data
+            .entry(self.last_section_name.clone())
+            .or_insert_with(Section::new)
+            .insert(name.into(), vector_data);
+        self
+    }
+
     /// Write Ini to file. This function is similar to `from_file` in use.
     /// # Errors
     /// Errors returned by `File::create()` and `BufWriter::write_all()`
@@ -388,15 +422,8 @@ mod library_test {
     #[test]
     fn string_vec() {
         let ini = Ini::from_string("[section]\nname=a, b, c");
-        let name: Option<Vec<String>> = ini.get_vec("section", "name");
-        assert_eq!(
-            name,
-            Some(vec![
-                String::from("a"),
-                String::from("b"),
-                String::from("c"),
-            ])
-        );
+        let name: Vec<String> = ini.get_vec("section", "name").unwrap_or(vec![]);
+        assert_eq!(name, ["a", "b", "c"]);
     }
 
     #[test]
@@ -461,7 +488,6 @@ mod library_test {
             .item("one", "1");
 
         let one: Option<i32> = config.get("items", "one");
-
         assert_eq!(one, Some(1));
     }
 
@@ -486,9 +512,19 @@ mod library_test {
     fn with_escaped_items() {
         let config = Ini::new()
             .section("default")
-            .item("vector", "1, 2, 3\\,4\\,5, 6, 7");
+            .item("vector", r"1, 2, 3\,4\,5, 6, 7");
 
         let vector: Vec<String> = config.get_vec("default", "vector").unwrap();
-        assert_eq!(vector, ["1", "2", "3\\,4\\,5", "6", "7"]);
+        assert_eq!(vector, ["1", "2", r"3\,4\,5", "6", "7"]);
+    }
+
+    #[test]
+    fn use_item_vec() {
+        let config = Ini::new()
+            .section("default")
+            .item_vec("a", &["a,b", r"\", "c,d", "e"]);
+
+        let v: Vec<String> = config.get_vec("default", "a").unwrap();
+        assert_eq!(v, [r"a\,b", r"\", r"c\,d", "e"]);
     }
 }

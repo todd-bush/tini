@@ -29,12 +29,12 @@ fn main() {
     // Read name3 key from section_one
     let name3: String = config.get("section_one", "name3").unwrap();
     // Read list of values
-    let frst4: Vec<bool> = config.get_vec("section_three", "frst4").unwrap();
+    let frst5: Vec<bool> = config.get_vec("section_three", "frst5").unwrap();
     println!("name3 = {}", name3);
-    println!("frst4 = {:?}", frst4);
+    println!("frst5 = {:?}", frst5);
     // Result:
     // name3 = example text
-    // frst4 = [true, false, true]
+    // frst5 = [true, false, true]
 }
 ```
 
@@ -46,12 +46,12 @@ use tini::Ini;
 
 fn main() {
     // Create ini structure
-    let conf = Ini::new()                                // initialize Ini
-                   .section("params")                    // create `params` section
-                   .item("pi", "3.14")                   // add `pi` key
-                   .item("lost", "4, 8, 15, 16, 23, 42") // add `lost` list
-                   .section("other")                     // create another section
-                   .item("default", "hello world!");     // add `default` key to `other` section
+    let conf = Ini::new()                                  // initialize Ini
+                   .section("params")                      // create `params` section
+                   .item("pi", "3.14")                     // add `pi` key
+                   .item("lost", "4, 8, 15, 16\\, 23, 42") // add `lost` list
+                   .section("other")                       // create another section
+                   .item("default", "hello world!");       // add `default` key to `other` section
     // At any time you can add new parameters to the last created section
     // < some code >
     // Now write ini structure to file
@@ -60,15 +60,10 @@ fn main() {
     // -----------------------------
     // [params]
     // pi = 3.14
-    // lost = 4, 8, 15, 16, 23, 42
-    // 
-    // [params]
-    // pi = 3.14
-    // lost = 4, 8, 15, 16, 23, 42
-    // 
+    // lost = 4, 8, 15, 16\, 23, 42
+    //
     // [other]
     // default = hello world!
-    //
     // -----------------------------
 }
 ```
