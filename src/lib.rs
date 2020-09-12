@@ -46,8 +46,11 @@ use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::iter::Iterator;
 use std::path::Path;
 use std::str::FromStr;
+use tokenizer::Tokenizer;
 
 mod ordered_hashmap;
+mod parser;
+mod tokenizer;
 
 type Section = OrderedHashMap<String, String>;
 type IniParsed = OrderedHashMap<String, Section>;
@@ -222,10 +225,9 @@ impl Ini {
     where
         T: FromStr,
     {
-        // TODO: write a normal splitter taking into account quotes
         self.get_raw(section, key).and_then(|x| {
-            x.split(',')
-                .map(|s| s.trim().parse())
+            Tokenizer::new(x)
+                .map(|s| T::from_str(s))
                 .collect::<Result<Vec<T>, _>>()
                 .ok()
         })
@@ -408,7 +410,7 @@ mod library_test {
     fn get_or_macro() {
         let ini = Ini::from_string("[section]\nlist = 1, 2, --, 4");
         let with_value: Vec<u8> = ini.get_vec("section", "list").unwrap_or(vec![1, 2, 3, 4]);
-        assert_eq!(with_value, vec![1, 2, 3, 4]);
+        assert_eq!(with_value, [1, 2, 3, 4]);
     }
 
     #[test]
@@ -478,113 +480,5 @@ mod library_test {
 
         assert_eq!(a_val, Some(1));
         assert_eq!(c_val, Some(3));
-    }
-}
-
-mod parser {
-    #[derive(Debug)]
-    pub enum Parsed {
-        Error(String),
-        Empty,
-        Section(String),
-        Value(String, String), /* Vector(String, Vec<String>), impossible, because OrderedHashMap field has type String, not Vec */
-    }
-
-    pub fn parse_line(line: &str) -> Parsed {
-        let content = match line.split(';').next() {
-            Some(value) => value.trim(),
-            None => return Parsed::Empty,
-        };
-        if content.is_empty() {
-            return Parsed::Empty;
-        }
-        // add checks for content
-        if content.starts_with('[') {
-            if content.ends_with(']') {
-                let section_name = content.trim_matches(|c| c == '[' || c == ']').to_owned();
-                return Parsed::Section(section_name);
-            } else {
-                return Parsed::Error("incorrect section syntax".to_owned());
-            }
-        } else if content.contains('=') {
-            let mut pair = content.splitn(2, '=').map(|s| s.trim());
-            // if key is None => error
-            let key = match pair.next() {
-                Some(value) => value.to_owned(),
-                None => return Parsed::Error("key is None".to_owned()),
-            };
-            // if value is None => empty string
-            let value = match pair.next() {
-                Some(value) => value.to_owned(),
-                None => "".to_owned(),
-            };
-            if key.is_empty() {
-                return Parsed::Error("empty key".to_owned());
-            }
-            return Parsed::Value(key, value);
-        }
-        Parsed::Error("incorrect syntax".to_owned())
-    }
-
-    #[cfg(test)]
-    mod test {
-        use super::*;
-
-        #[test]
-        fn test_comment() {
-            match parse_line(";------") {
-                Parsed::Empty => assert!(true),
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_entry() {
-            match parse_line("name1 = 100 ; comment") {
-                Parsed::Value(name, text) => {
-                    assert_eq!(name, String::from("name1"));
-                    assert_eq!(text, String::from("100"));
-                }
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_weird_name() {
-            match parse_line("_.,:(){}-#@&*| = 100") {
-                Parsed::Value(name, text) => {
-                    assert_eq!(name, String::from("_.,:(){}-#@&*|"));
-                    assert_eq!(text, String::from("100"));
-                }
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_text_entry() {
-            match parse_line("text_name = hello world!") {
-                Parsed::Value(name, text) => {
-                    assert_eq!(name, String::from("text_name"));
-                    assert_eq!(text, String::from("hello world!"));
-                }
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_incorrect_token() {
-            match parse_line("[section = 1, 2 = value") {
-                Parsed::Error(_) => assert!(true),
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_incorrect_key_value_line() {
-            match parse_line("= 3") {
-                Parsed::Error(_) => assert!(true),
-                _ => assert!(false),
-            }
-        }
     }
 }
