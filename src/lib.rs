@@ -481,4 +481,14 @@ mod library_test {
         assert_eq!(a_val, Some(1));
         assert_eq!(c_val, Some(3));
     }
+
+    #[test]
+    fn with_escaped_items() {
+        let config = Ini::new()
+            .section("default")
+            .item("vector", "1, 2, 3\\,4\\,5, 6, 7");
+
+        let vector: Vec<String> = config.get_vec("default", "vector").unwrap();
+        assert_eq!(vector, ["1", "2", "3\\,4\\,5", "6", "7"]);
+    }
 }

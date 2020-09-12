@@ -21,7 +21,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                     break;
                 }
                 ESCAPE => {
-                    if let Some(_) = iterator.next() {
+                    if iterator.next().is_some() {
                         index += 1;
                     }
                 }
