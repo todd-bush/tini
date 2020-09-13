@@ -48,7 +48,7 @@ fn main() {
     let conf = Ini::new()                                  // initialize Ini
                    .section("params")                      // create `params` section
                    .item("pi", "3.14")                     // add `pi` key
-                   .item("lost", "4, 8, 15, 16\\, 23, 42") // add `lost` list
+                   .item("lost", "4, 8, 15, 16, 23, 42") // add `lost` list
                    .section("other")                       // create another section
                    .item("default", "hello world!");       // add `default` key to `other` section
     // At any time you can add new parameters to the last created section
@@ -59,7 +59,7 @@ fn main() {
     // -----------------------------
     // [params]
     // pi = 3.14
-    // lost = 4, 8, 15, 16\, 23, 42
+    // lost = 4, 8, 15, 16, 23, 42
     //
     // [other]
     // default = hello world!

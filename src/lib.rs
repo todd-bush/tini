@@ -38,6 +38,9 @@
 //! assert_eq!(consts, [3.1416, 2.7183]);
 //! assert_eq!(lost, [4, 8, 15, 16, 23, 42]);
 //! ````
+mod ordered_hashmap;
+mod parser;
+
 use ordered_hashmap::OrderedHashMap;
 use parser::{parse_line, Parsed};
 use std::fmt;
@@ -46,11 +49,6 @@ use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::iter::Iterator;
 use std::path::Path;
 use std::str::FromStr;
-use tokenizer::Tokenizer;
-
-mod ordered_hashmap;
-mod parser;
-mod tokenizer;
 
 type Section = OrderedHashMap<String, String>;
 type IniParsed = OrderedHashMap<String, Section>;
@@ -165,6 +163,25 @@ impl Ini {
         self
     }
 
+    pub fn item_vec_with_sep<S, V>(mut self, name: S, vector: &[V], sep: &str) -> Self
+    where
+        S: Into<String>,
+        V: fmt::Display,
+    {
+        let vector_data = vector
+            .iter()
+            .map(|v| format!("{}", v))
+            .collect::<Vec<_>>()
+            .join(sep);
+        // TODO: use this instead current code
+        // self.item(name, vector_data)
+        self.data
+            .entry(self.last_section_name.clone())
+            .or_insert_with(Section::new)
+            .insert(name.into(), vector_data);
+        self
+    }
+
     /// Add key-vector pair to last section
     ///
     /// # Example
@@ -180,23 +197,12 @@ impl Ini {
     /// assert_eq!(vb, ["a", "b", "c"]);
     /// ```
     // TODO: optimize
-    pub fn item_vec<S, V>(mut self, name: S, vector: &[V]) -> Self
+    pub fn item_vec<S, V>(self, name: S, vector: &[V]) -> Self
     where
         S: Into<String>,
         V: fmt::Display,
     {
-        let vector_data = vector
-            .iter()
-            .map(|s| format!("{}", s).replace(r"\", r"\ ").replace(",", r"\,"))
-            .collect::<Vec<_>>()
-            .join(", ");
-        // TODO: use this instead current code
-        // self.item(name, vector_data)
-        self.data
-            .entry(self.last_section_name.clone())
-            .or_insert_with(Section::new)
-            .insert(name.into(), vector_data);
-        self
+        self.item_vec_with_sep(name, vector, ", ")
     }
 
     /// Write Ini to file. This function is similar to `from_file` in use.
@@ -259,9 +265,27 @@ impl Ini {
     where
         T: FromStr,
     {
+        self.get_vec_with_sep(section, key, ",")
+    }
+
+    /// Get vector value of key in section
+    ///
+    /// The function returns `None` if one of the elements can not be parsed.
+    ///
+    /// # Example
+    /// ```
+    /// # use tini::Ini;
+    /// let conf = Ini::from_buffer("[section]\nlist = 1, 2, 3, 4");
+    /// let value: Option<Vec<u8>> = conf.get_vec("section", "list");
+    /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
+    /// ```
+    pub fn get_vec_with_sep<T>(&self, section: &str, key: &str, sep: &str) -> Option<Vec<T>>
+    where
+        T: FromStr,
+    {
         self.get_raw(section, key).and_then(|x| {
-            Tokenizer::new(x)
-                .map(|s| T::from_str(s))
+            x.split(sep)
+                .map(|s| s.trim().parse())
                 .collect::<Result<Vec<T>, _>>()
                 .ok()
         })
@@ -512,19 +536,19 @@ mod library_test {
     fn with_escaped_items() {
         let config = Ini::new()
             .section("default")
-            .item("vector", r"1, 2, 3\,4\,5, 6, 7");
+            .item("vector", r"1, 2, 3, 4, 5, 6, 7");
 
         let vector: Vec<String> = config.get_vec("default", "vector").unwrap();
-        assert_eq!(vector, ["1", "2", r"3\,4\,5", "6", "7"]);
+        assert_eq!(vector, ["1", "2", "3", "4", "5", "6", "7"]);
     }
 
     #[test]
     fn use_item_vec() {
         let config = Ini::new()
             .section("default")
-            .item_vec("a", &["a,b", r"\", "c,d", "e"]);
+            .item_vec_with_sep("a", &["a,b", "c,d", "e"], "|");
 
-        let v: Vec<String> = config.get_vec("default", "a").unwrap();
-        assert_eq!(v, [r"a\,b", r"\", r"c\,d", "e"]);
+        let v: Vec<String> = config.get_vec_with_sep("default", "a", "|").unwrap();
+        assert_eq!(v, [r"a,b", "c,d", "e"]);
     }
 }
