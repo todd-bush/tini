@@ -14,8 +14,8 @@ fn main() {
         .item_vec("vec_str", &v_str_1)
         .item_vec("str", &v_str_2)
         .item_vec("int", &v_int)
-        .item_vec("quoted", &v_q)
-        .item_vec("a", &["a,b", r"\", "c,d", "e"]);
+        .item_vec_with_sep("quoted", &v_q, "| ")
+        .item_vec_with_sep("a", &["a,b", r"\", "c,d", "e"], "| ");
 
     println!("{}", conf.to_buffer());
 }

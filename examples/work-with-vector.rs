@@ -17,8 +17,6 @@ fn main() {
     // get Strings
     let str_a: Vec<String> = config.get_vec("section_three", "frst3").unwrap();
     println!("frst3 = {:?}", str_a);
-    let str_b: Vec<String> = config.get_vec("section_three", "frst4").unwrap();
-    println!("frst4 = {:?}", str_b);
 
     // get bools
     let bool_v: Vec<bool> = config.get_vec("section_three", "frst5").unwrap();
