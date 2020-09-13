@@ -163,6 +163,20 @@ impl Ini {
         self
     }
 
+    /// Add key-vector pair to last section separated by sep string
+    ///
+    /// # Example
+    /// ```
+    /// # use tini::Ini;
+    /// let conf = Ini::new()
+    ///     .section("default")
+    ///     .item_vec_with_sep("a", &[1, 2, 3, 4], ",")
+    ///     .item_vec_with_sep("b", &vec!["a", "b", "c"], "|");
+    /// let va: Option<Vec<u8>> = conf.get_vec("default", "a");
+    /// let vb: Vec<String> = conf.get_vec_with_sep("default", "b", "|").unwrap();
+    /// assert_eq!(va, Some(vec![1, 2, 3, 4]));
+    /// assert_eq!(vb, ["a", "b", "c"]);
+    /// ```
     pub fn item_vec_with_sep<S, V>(mut self, name: S, vector: &[V], sep: &str) -> Self
     where
         S: Into<String>,
@@ -173,8 +187,6 @@ impl Ini {
             .map(|v| format!("{}", v))
             .collect::<Vec<_>>()
             .join(sep);
-        // TODO: use this instead current code
-        // self.item(name, vector_data)
         self.data
             .entry(self.last_section_name.clone())
             .or_insert_with(Section::new)
@@ -196,7 +208,6 @@ impl Ini {
     /// assert_eq!(va, Some(vec![1, 2, 3, 4]));
     /// assert_eq!(vb, ["a", "b", "c"]);
     /// ```
-    // TODO: optimize
     pub fn item_vec<S, V>(self, name: S, vector: &[V]) -> Self
     where
         S: Into<String>,
@@ -268,15 +279,15 @@ impl Ini {
         self.get_vec_with_sep(section, key, ",")
     }
 
-    /// Get vector value of key in section
+    /// Get vector value of key in section separeted by sep string
     ///
     /// The function returns `None` if one of the elements can not be parsed.
     ///
     /// # Example
     /// ```
     /// # use tini::Ini;
-    /// let conf = Ini::from_buffer("[section]\nlist = 1, 2, 3, 4");
-    /// let value: Option<Vec<u8>> = conf.get_vec("section", "list");
+    /// let conf = Ini::from_buffer("[section]\nlist = 1|2|3|4");
+    /// let value: Option<Vec<u8>> = conf.get_vec_with_sep("section", "list", "|");
     /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
     /// ```
     pub fn get_vec_with_sep<T>(&self, section: &str, key: &str, sep: &str) -> Option<Vec<T>>
@@ -544,9 +555,10 @@ mod library_test {
 
     #[test]
     fn use_item_vec() {
-        let config = Ini::new()
-            .section("default")
-            .item_vec_with_sep("a", &["a,b", "c,d", "e"], "|");
+        let config =
+            Ini::new()
+                .section("default")
+                .item_vec_with_sep("a", &["a,b", "c,d", "e"], "|");
 
         let v: Vec<String> = config.get_vec_with_sep("default", "a", "|").unwrap();
         assert_eq!(v, [r"a,b", "c,d", "e"]);
