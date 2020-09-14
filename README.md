@@ -11,7 +11,7 @@
 Add `tini` to your `Cargo.toml`, for example:
 ```toml
 [dependencies]
-tini = "0.3"
+tini = "0.4"
 ```
 
 ## How to use
