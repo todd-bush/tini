@@ -15,13 +15,10 @@ fn main() {
     println!("frst2 = {:?}", float_v);
 
     // get Strings
-    // Warning
-    //  data will be splitted by ',' character
-    //  there is no exception
-    let str_v: Vec<String> = config.get_vec("section_three", "frst3").unwrap();
-    println!("frst3 = {:?}", str_v);
+    let str_a: Vec<String> = config.get_vec("section_three", "frst3").unwrap();
+    println!("frst3 = {:?}", str_a);
 
     // get bools
-    let bool_v: Vec<bool> = config.get_vec("section_three", "frst4").unwrap();
-    println!("frst4 = {:?}", bool_v);
+    let bool_v: Vec<bool> = config.get_vec("section_three", "frst5").unwrap();
+    println!("frst5 = {:?}", bool_v);
 }

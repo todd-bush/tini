@@ -38,6 +38,9 @@
 //! assert_eq!(consts, [3.1416, 2.7183]);
 //! assert_eq!(lost, [4, 8, 15, 16, 23, 42]);
 //! ````
+mod ordered_hashmap;
+mod parser;
+
 use ordered_hashmap::OrderedHashMap;
 use parser::{parse_line, Parsed};
 use std::fmt;
@@ -46,8 +49,6 @@ use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::iter::Iterator;
 use std::path::Path;
 use std::str::FromStr;
-
-mod ordered_hashmap;
 
 type Section = OrderedHashMap<String, String>;
 type IniParsed = OrderedHashMap<String, Section>;
@@ -162,6 +163,59 @@ impl Ini {
         self
     }
 
+    /// Add key-vector pair to last section separated by sep string
+    ///
+    /// # Example
+    /// ```
+    /// # use tini::Ini;
+    /// let conf = Ini::new()
+    ///     .section("default")
+    ///     .item_vec_with_sep("a", &[1, 2, 3, 4], ",")
+    ///     .item_vec_with_sep("b", &vec!["a", "b", "c"], "|");
+    /// let va: Option<Vec<u8>> = conf.get_vec("default", "a");
+    /// let vb: Vec<String> = conf.get_vec_with_sep("default", "b", "|").unwrap();
+    /// assert_eq!(va, Some(vec![1, 2, 3, 4]));
+    /// assert_eq!(vb, ["a", "b", "c"]);
+    /// ```
+    pub fn item_vec_with_sep<S, V>(mut self, name: S, vector: &[V], sep: &str) -> Self
+    where
+        S: Into<String>,
+        V: fmt::Display,
+    {
+        let vector_data = vector
+            .iter()
+            .map(|v| format!("{}", v))
+            .collect::<Vec<_>>()
+            .join(sep);
+        self.data
+            .entry(self.last_section_name.clone())
+            .or_insert_with(Section::new)
+            .insert(name.into(), vector_data);
+        self
+    }
+
+    /// Add key-vector pair to last section
+    ///
+    /// # Example
+    /// ```
+    /// # use tini::Ini;
+    /// let conf = Ini::new()
+    ///     .section("default")
+    ///     .item_vec("a", &[1, 2, 3, 4])
+    ///     .item_vec("b", &vec!["a", "b", "c"]);
+    /// let va: Option<Vec<u8>> = conf.get_vec("default", "a");
+    /// let vb: Vec<String> = conf.get_vec("default", "b").unwrap();
+    /// assert_eq!(va, Some(vec![1, 2, 3, 4]));
+    /// assert_eq!(vb, ["a", "b", "c"]);
+    /// ```
+    pub fn item_vec<S, V>(self, name: S, vector: &[V]) -> Self
+    where
+        S: Into<String>,
+        V: fmt::Display,
+    {
+        self.item_vec_with_sep(name, vector, ", ")
+    }
+
     /// Write Ini to file. This function is similar to `from_file` in use.
     /// # Errors
     /// Errors returned by `File::create()` and `BufWriter::write_all()`
@@ -222,9 +276,26 @@ impl Ini {
     where
         T: FromStr,
     {
-        // TODO: write a normal splitter taking into account quotes
+        self.get_vec_with_sep(section, key, ",")
+    }
+
+    /// Get vector value of key in section separeted by sep string
+    ///
+    /// The function returns `None` if one of the elements can not be parsed.
+    ///
+    /// # Example
+    /// ```
+    /// # use tini::Ini;
+    /// let conf = Ini::from_buffer("[section]\nlist = 1|2|3|4");
+    /// let value: Option<Vec<u8>> = conf.get_vec_with_sep("section", "list", "|");
+    /// assert_eq!(value, Some(vec![1, 2, 3, 4]));
+    /// ```
+    pub fn get_vec_with_sep<T>(&self, section: &str, key: &str, sep: &str) -> Option<Vec<T>>
+    where
+        T: FromStr,
+    {
         self.get_raw(section, key).and_then(|x| {
-            x.split(',')
+            x.split(sep)
                 .map(|s| s.trim().parse())
                 .collect::<Result<Vec<T>, _>>()
                 .ok()
@@ -386,15 +457,8 @@ mod library_test {
     #[test]
     fn string_vec() {
         let ini = Ini::from_string("[section]\nname=a, b, c");
-        let name: Option<Vec<String>> = ini.get_vec("section", "name");
-        assert_eq!(
-            name,
-            Some(vec![
-                String::from("a"),
-                String::from("b"),
-                String::from("c"),
-            ])
-        );
+        let name: Vec<String> = ini.get_vec("section", "name").unwrap_or(vec![]);
+        assert_eq!(name, ["a", "b", "c"]);
     }
 
     #[test]
@@ -408,7 +472,7 @@ mod library_test {
     fn get_or_macro() {
         let ini = Ini::from_string("[section]\nlist = 1, 2, --, 4");
         let with_value: Vec<u8> = ini.get_vec("section", "list").unwrap_or(vec![1, 2, 3, 4]);
-        assert_eq!(with_value, vec![1, 2, 3, 4]);
+        assert_eq!(with_value, [1, 2, 3, 4]);
     }
 
     #[test]
@@ -459,7 +523,6 @@ mod library_test {
             .item("one", "1");
 
         let one: Option<i32> = config.get("items", "one");
-
         assert_eq!(one, Some(1));
     }
 
@@ -479,112 +542,25 @@ mod library_test {
         assert_eq!(a_val, Some(1));
         assert_eq!(c_val, Some(3));
     }
-}
 
-mod parser {
-    #[derive(Debug)]
-    pub enum Parsed {
-        Error(String),
-        Empty,
-        Section(String),
-        Value(String, String), /* Vector(String, Vec<String>), impossible, because OrderedHashMap field has type String, not Vec */
+    #[test]
+    fn with_escaped_items() {
+        let config = Ini::new()
+            .section("default")
+            .item("vector", r"1, 2, 3, 4, 5, 6, 7");
+
+        let vector: Vec<String> = config.get_vec("default", "vector").unwrap();
+        assert_eq!(vector, ["1", "2", "3", "4", "5", "6", "7"]);
     }
 
-    pub fn parse_line(line: &str) -> Parsed {
-        let content = match line.split(';').next() {
-            Some(value) => value.trim(),
-            None => return Parsed::Empty,
-        };
-        if content.is_empty() {
-            return Parsed::Empty;
-        }
-        // add checks for content
-        if content.starts_with('[') {
-            if content.ends_with(']') {
-                let section_name = content.trim_matches(|c| c == '[' || c == ']').to_owned();
-                return Parsed::Section(section_name);
-            } else {
-                return Parsed::Error("incorrect section syntax".to_owned());
-            }
-        } else if content.contains('=') {
-            let mut pair = content.splitn(2, '=').map(|s| s.trim());
-            // if key is None => error
-            let key = match pair.next() {
-                Some(value) => value.to_owned(),
-                None => return Parsed::Error("key is None".to_owned()),
-            };
-            // if value is None => empty string
-            let value = match pair.next() {
-                Some(value) => value.to_owned(),
-                None => "".to_owned(),
-            };
-            if key.is_empty() {
-                return Parsed::Error("empty key".to_owned());
-            }
-            return Parsed::Value(key, value);
-        }
-        Parsed::Error("incorrect syntax".to_owned())
-    }
+    #[test]
+    fn use_item_vec() {
+        let config =
+            Ini::new()
+                .section("default")
+                .item_vec_with_sep("a", &["a,b", "c,d", "e"], "|");
 
-    #[cfg(test)]
-    mod test {
-        use super::*;
-
-        #[test]
-        fn test_comment() {
-            match parse_line(";------") {
-                Parsed::Empty => assert!(true),
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_entry() {
-            match parse_line("name1 = 100 ; comment") {
-                Parsed::Value(name, text) => {
-                    assert_eq!(name, String::from("name1"));
-                    assert_eq!(text, String::from("100"));
-                }
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_weird_name() {
-            match parse_line("_.,:(){}-#@&*| = 100") {
-                Parsed::Value(name, text) => {
-                    assert_eq!(name, String::from("_.,:(){}-#@&*|"));
-                    assert_eq!(text, String::from("100"));
-                }
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_text_entry() {
-            match parse_line("text_name = hello world!") {
-                Parsed::Value(name, text) => {
-                    assert_eq!(name, String::from("text_name"));
-                    assert_eq!(text, String::from("hello world!"));
-                }
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_incorrect_token() {
-            match parse_line("[section = 1, 2 = value") {
-                Parsed::Error(_) => assert!(true),
-                _ => assert!(false),
-            }
-        }
-
-        #[test]
-        fn test_incorrect_key_value_line() {
-            match parse_line("= 3") {
-                Parsed::Error(_) => assert!(true),
-                _ => assert!(false),
-            }
-        }
+        let v: Vec<String> = config.get_vec_with_sep("default", "a", "|").unwrap();
+        assert_eq!(v, [r"a,b", "c,d", "e"]);
     }
 }
