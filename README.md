@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/pinecrew/tini.svg?branch=master)](https://travis-ci.org/pinecrew/tini)
 [![Crates](https://img.shields.io/crates/v/tini.svg)](https://crates.io/crates/tini)
 
-| [Documentation](http://pinecrew.github.io/tini/tini/) | [Examples](./examples) |
+| [Documentation](https://docs.rs/tini) | [Examples](./examples) |
 
 ## Usage
 
