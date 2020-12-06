@@ -13,6 +13,3 @@ edition = "2018"
 
 [lib]
 name = "tini"
-
-[badges]
-travis-ci = { repository = "pinecrew/tini" }
