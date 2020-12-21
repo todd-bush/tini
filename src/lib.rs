@@ -44,7 +44,7 @@ mod parser;
 use ordered_hashmap::OrderedHashMap;
 use parser::{parse_line, Parsed};
 use std::fmt;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::iter::Iterator;
 use std::path::Path;
@@ -221,7 +221,11 @@ impl Ini {
     /// Errors returned by `File::create()` and `BufWriter::write_all()`
     ///
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
-        let file = File::create(path)?;
+        let file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(path)?;
         let mut writer = BufWriter::new(file);
         writer.write_all(self.to_buffer().as_bytes())?;
         Ok(())
@@ -562,5 +566,15 @@ mod library_test {
 
         let v: Vec<String> = config.get_vec_with_sep("default", "a", "|").unwrap();
         assert_eq!(v, [r"a,b", "c,d", "e"]);
+    }
+
+    #[test]
+    fn test_to_file() {
+        let config =
+            Ini::new()
+                .section("default")
+                .item_vec_with_sep("a", &["a,b", "c,d", "e"], "|");
+
+        config.to_file("target/test.ini");
     }
 }
