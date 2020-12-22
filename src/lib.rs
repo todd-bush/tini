@@ -221,11 +221,18 @@ impl Ini {
     /// Errors returned by `File::create()` and `BufWriter::write_all()`
     ///
     pub fn to_file<S: AsRef<Path> + ?Sized>(&self, path: &S) -> Result<(), io::Error> {
+        let p = Path::new(path.as_ref());
+
+        if !p.exists() {
+            std::fs::create_dir_all(p.parent().unwrap())?;
+        }
+
         let file = OpenOptions::new()
             .create(true)
             .write(true)
             .truncate(true)
             .open(path)?;
+
         let mut writer = BufWriter::new(file);
         writer.write_all(self.to_buffer().as_bytes())?;
         Ok(())
@@ -575,6 +582,10 @@ mod library_test {
                 .section("default")
                 .item_vec_with_sep("a", &["a,b", "c,d", "e"], "|");
 
-        config.to_file("target/test.ini");
+        config.to_file("target/ini/test.ini").unwrap();
+
+        let p = Path::new("target/ini/test.ini");
+
+        assert_eq!(p.exists(), true);
     }
 }
